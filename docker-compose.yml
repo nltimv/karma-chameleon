@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  karmabot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - SLACK_BOT_TOKEN=
+      - SLACK_APP_TOKEN=
+      - DB_NAME=karmabot
+      - DB_USER=postgres
+      - DB_PASSWORD=henk
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      - db
+  db:
+    image: postgres:latest
+    ports:
+      - 5432:15432
+    environment:
+      - POSTGRES_PASSWORD=henk
+      - POSTGRES_DB=karmabot
+
+  
