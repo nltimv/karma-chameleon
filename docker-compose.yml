@@ -5,14 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    environment:
-      - SLACK_BOT_TOKEN=
-      - SLACK_APP_TOKEN=
-      - DB_NAME=karmabot
-      - DB_USER=postgres
-      - DB_PASSWORD=henk
-      - DB_HOST=db
-      - DB_PORT=5432
+    env_file:
+      - .env.default
+      - .env.overrides
     depends_on:
       - db
   db:
