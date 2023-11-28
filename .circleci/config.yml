@@ -5,7 +5,7 @@ version: 2.1
 executors:
   docker-publisher:
     environment:
-      IMAGE_NAME: nltimv/karma-chameleon
+      IMAGE_NAME: ghcr.io/nltimv/karma-chameleon
       GHCR_USERNAME: nltimv
     docker:
       - image: docker:20
@@ -51,7 +51,7 @@ jobs:
       - run:
           name: Publish Docker Image to Docker Hub
           command: |
-            echo "$GHCR_TOKEN" | docker login -u "$GHCR_USERNAME" -p "$GHCR_TOKEN"
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" -p "$GHCR_TOKEN"
             docker push $IMAGE_NAME:latest
             docker tag $IMAGE_NAME:latest $IMAGE_NAME:<< pipeline.number >>
             docker push $IMAGE_NAME:<< pipeline.number >>
