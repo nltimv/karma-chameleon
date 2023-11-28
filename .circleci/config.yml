@@ -1,0 +1,78 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+
+executors:
+  docker-publisher:
+    environment:
+      IMAGE_NAME: nltimv/karma-chameleon
+      GHCR_USERNAME: nltimv
+    docker:
+      - image: docker:20
+    resource_class: small
+
+# Define a job to be invoked later in a workflow.
+# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
+jobs:
+  build:
+    executor: docker-publisher
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build application Docker image
+          command: |
+            docker build -t $IMAGE_NAME:ci .
+  build-main:
+    executor: docker-publisher
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build application Docker image
+          command: |
+            docker build -t $IMAGE_NAME:latest .
+      - run:
+          name: Archive Docker image
+          command: docker save -o image.tar $IMAGE_NAME
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./image.tar
+  publish-main:
+    executor: docker-publisher
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - setup_remote_docker
+      - run:
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/image.tar
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo "$GHCR_TOKEN" | docker login -u "$GHCR_USERNAME" -p "$GHCR_TOKEN"
+            docker push $IMAGE_NAME:latest
+            docker tag $IMAGE_NAME:latest $IMAGE_NAME:<< pipeline.number >>
+            docker push $IMAGE_NAME:<< pipeline.number >>
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: main
+  build-main:
+    jobs:
+      - build-main:
+          filters:
+            branches:
+              only: main
+      - publish-main:
+          requires:
+            - build-main
+          filters:
+            branches:
+              only: main
