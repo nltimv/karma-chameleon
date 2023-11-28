@@ -51,7 +51,7 @@ jobs:
       - run:
           name: Publish Docker Image to Docker Hub
           command: |
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" -p "$GHCR_TOKEN"
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
             docker push $IMAGE_NAME:latest
             docker tag $IMAGE_NAME:latest $IMAGE_NAME:<< pipeline.number >>
             docker push $IMAGE_NAME:<< pipeline.number >>
