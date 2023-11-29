@@ -68,8 +68,9 @@ jobs:
       - run:
           name: Set version numbers in Helm
           command: |
+            export REVISION=$(echo "<< pipeline.git.revision >>" | awk '{print substr($0,0,7)}')
             export CHART_VERSION="0.0.<< pipeline.number >>"
-            export APP_VERSION="0.0.0.<< pipeline.number >>"
+            export APP_VERSION="0.0.0.<< pipeline.number >>-dev-$REVISION"
             sed -i -e "s/(chartVersion)/$CHART_VERSION/" -e "s/(appVersion)/$APP_VERSION/" -e "s/(chartName)/$CHART_DEV_NAME/" "$CHART_PATH/Chart.yaml"
       - run:
           name: Package Helm chart
