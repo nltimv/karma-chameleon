@@ -63,7 +63,7 @@ jobs:
       - setup_remote_docker
       - run:
           name: Install Helm
-          command: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          command: wget -qO- https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
       - run:
           name: Set version numbers in Helm
           command: |
@@ -92,7 +92,7 @@ jobs:
       - setup_remote_docker
       - run:
           name: Install Helm
-          command: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          command: wget -qO- https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
       - run:
           name: Set version numbers in Helm
           command: |
