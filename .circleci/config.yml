@@ -3,23 +3,29 @@
 version: 2.1
 
 executors:
-  docker-publisher:
+  docker-builder:
     environment:
-      APP_NAME: karma-chameleon
       IMAGE_NAME: ghcr.io/nltimv/karma-chameleon
-      CHART_NAME: ghcr.io/nltimv/karma-chameleon-helm
-      CHART_DEV_NAME: ghcr.io/nltimv/karma-chameleon-helm-dev
       CHART_PATH: ./charts/karma-chameleon
       GHCR_USERNAME: nltimv
     docker:
       - image: docker:20
     resource_class: small
+  helm-builder:
+    environment:
+      APP_NAME: karma-chameleon
+      CHART_NAME: ghcr.io/nltimv/karma-chameleon-helm
+      CHART_DEV_NAME: ghcr.io/nltimv/karma-chameleon-helm-dev
+      CHART_PATH: ./charts/karma-chameleon
+      GHCR_USERNAME: nltimv
+    docker:
+      - image: cimg/deploy:2023.09
 
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
   build-docker-dev:
-    executor: docker-publisher
+    executor: docker-builder
     steps:
       - checkout
       - setup_remote_docker
@@ -38,7 +44,7 @@ jobs:
             docker tag $IMAGE_NAME:canary $IMAGE_NAME:$VERSION
             docker push $IMAGE_NAME:$VERSION
   build-docker-release:
-    executor: docker-publisher
+    executor: docker-builder
     steps:
       - checkout
       - setup_remote_docker
@@ -57,13 +63,9 @@ jobs:
             docker tag $IMAGE_NAME:latest $IMAGE_NAME:$VERSION
             docker push $IMAGE_NAME:$VERSION
   build-helm-dev:
-    executor: docker-publisher
+    executor: helm-builder
     steps:
       - checkout
-      - setup_remote_docker
-      - run:
-          name: Install Helm
-          command: wget -qO- https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sh
       - run:
           name: Set version numbers in Helm
           command: |
@@ -86,13 +88,9 @@ jobs:
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
             helm push "$APP_NAME-$CHART_VERSION.tgz" "oci://$CHART_DEV_NAME"
   build-helm-release:
-    executor: docker-publisher
+    executor: helm-builder
     steps:
       - checkout
-      - setup_remote_docker
-      - run:
-          name: Install Helm
-          command: wget -qO- https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sh
       - run:
           name: Set version numbers in Helm
           command: |
