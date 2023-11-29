@@ -22,24 +22,19 @@ jobs:
       - run:
           name: Build application Docker image
           command: |
-            docker build -t $IMAGE_NAME:ci .
-  build-main:
-    executor: docker-publisher
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: Build application Docker image
-          command: |
-            docker build -t $IMAGE_NAME:latest .
+            docker build -t build:latest .
       - run:
           name: Archive Docker image
           command: docker save -o image.tar $IMAGE_NAME
+      - run:
+          name: Get version number
+          command: git describe --tags | sed 's/v//' | tee version.txt
       - persist_to_workspace:
           root: .
           paths:
             - ./image.tar
-  publish-main:
+            - ./version.txt
+  publish-dev:
     executor: docker-publisher
     steps:
       - attach_workspace:
@@ -49,30 +44,53 @@ jobs:
           name: Load archived Docker image
           command: docker load -i /tmp/workspace/image.tar
       - run:
-          name: Publish Docker Image to Docker Hub
+          name: Set image name and version number
+          command: |
+            export VERSION="$(cat version.txt).0.<< pipeline.number >>-dev"
+      - run:
+          name: Publish Docker Image to GitHub Container Registry
           command: |
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+            docker tag $build:latest $IMAGE_NAME:$VERSION
+            docker push $IMAGE_NAME:$VERSION
+  publish-release:
+    executor: docker-publisher
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - setup_remote_docker
+      - run:
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/image.tar
+      - run:
+          name: Set version number
+          command:
+            export VERSION="$(cat version.txt).0.<< pipeline.number >>"
+      - run:
+          name: Publish Docker Image to GitHub Container Registry
+          command: |
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+            docker tag build:latest $IMAGE_NAME:latest
             docker push $IMAGE_NAME:latest
-            docker tag $IMAGE_NAME:latest $IMAGE_NAME:<< pipeline.number >>
-            docker push $IMAGE_NAME:<< pipeline.number >>
+            docker tag $IMAGE_NAME:latest $IMAGE_NAME:$VERSION
+            docker push $IMAGE_NAME:$VERSION
 
 workflows:
   version: 2
   build:
     jobs:
-      - build:
-          filters:
-            branches:
-              ignore: main
-  build-main:
-    jobs:
-      - build-main:
-          filters:
-            branches:
-              only: main
-      - publish-main:
+      - build
+      - publish-dev:
           requires:
-            - build-main
+            - build
+          filters:
+            tags:
+              ignore: v[0-9]+[.][0-9]+/
+      - publish-release:
+          requires:
+            - build
           filters:
             branches:
-              only: main
+              ignore: /.*/
+            tags:
+              only: /v[0-9]+[.][0-9]+/
