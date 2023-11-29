@@ -39,6 +39,7 @@ def update_karma(user_id, team_id, increment):
     row = cursor.fetchone()
 
     if row is None:
+        karma = increment
         cursor.execute("INSERT INTO users (user_id, team_id, karma) VALUES (%s, %s, %s)", (user_id, team_id, increment))
     else:
         karma = row[0] + increment
