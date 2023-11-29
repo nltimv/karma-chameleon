@@ -45,7 +45,9 @@ jobs:
             export REVISION=$(echo "<< pipeline.git.revision >>" | awk '{print substr($0,0,7)}')
             export VERSION="0.0.0.<< pipeline.number >>-dev-$REVISION"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            docker tag build:latest $IMAGE_NAME:$VERSION
+            docker tag build:latest $IMAGE_NAME:canary
+            docker push $IMAGE_NAME:canary
+            docker tag $IMAGE_NAME:canary $IMAGE_NAME:$VERSION
             docker push $IMAGE_NAME:$VERSION
   publish-release:
     executor: docker-publisher
