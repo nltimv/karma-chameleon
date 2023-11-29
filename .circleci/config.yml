@@ -77,7 +77,7 @@ workflows:
             - build
           filters:
             tags:
-              ignore: v[0-9]+[.][0-9]+/
+              ignore: /.*/
       - publish-release:
           requires:
             - build
@@ -85,4 +85,4 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /v[0-9]+[.][0-9]+/
+              only: /.*/
