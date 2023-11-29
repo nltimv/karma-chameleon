@@ -48,7 +48,7 @@ jobs:
           name: Publish Docker Image to GitHub Container Registry
           command: |
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            docker tag $build:latest $IMAGE_NAME:$VERSION
+            docker tag build:latest $IMAGE_NAME:$VERSION
             docker push $IMAGE_NAME:$VERSION
   publish-release:
     executor: docker-publisher
