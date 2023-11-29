@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "karma-chameleon.fullname" . }}
+  labels:
+    {{- include "karma-chameleon.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "karma-chameleon.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "karma-chameleon.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "karma-chameleon.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DB_HOST
+              value: {{ .Values.karmaChameleon.db.host | quote }}
+            - name: DB_PORT
+              value: {{ .Values.karmaChameleon.db.port | quote }}
+            - name: DB_NAME
+              value: {{ .Values.karmaChameleon.db.databaseName | quote }}
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.karmaChameleon.db.existingSecretName | default (printf "%s-%s" (include "karma-chameleon.fullname" .) "db") | quote }}
+                  key: {{ .Values.karmaChameleon.db.secretKeyUsername | default "username" | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.karmaChameleon.db.existingSecretName | default (printf "%s-%s" (include "karma-chameleon.fullname" .) "db") | quote }}
+                  key: {{ .Values.karmaChameleon.db.secretKeyPassword | default "password" | quote }}
+            - name: SLACK_APP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.karmaChameleon.slack.existingSecretName | default (printf "%s-%s" (include "karma-chameleon.fullname" .) "slack") | quote }}
+                  key: {{ .Values.karmaChameleon.slack.secretKeyAppToken | default "appToken" | quote }}
+            - name: SLACK_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.karmaChameleon.slack.existingSecretName | default (printf "%s-%s" (include "karma-chameleon.fullname" .) "slack") | quote }}
+                  key: {{ .Values.karmaChameleon.slack.secretKeyBotToken | default "botToken" | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
