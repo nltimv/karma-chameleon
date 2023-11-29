@@ -69,31 +69,6 @@ jobs:
       - run:
           name: Set version numbers in Helm
           command: |
-            export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
-            export CHART_VERSION="$NUMBER.<< pipeline.number >>"
-            export APP_VERSION="$NUMBER.0.<< pipeline.number >>"
-            sed "s/(chartVersion)/$CHART_VERSION/" "$CHART_PATH/Chart.yaml"
-            sed "s/(appVersion)/$APP_VERSION/" "$CHART_PATH/Chart.yaml"
-      - run:
-          name: Package Helm chart
-          command: |
-            export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
-            export CHART_VERSION="$NUMBER.<< pipeline.number >>"
-            helm package $CHART_PATH
-      - run:
-          name: Push Helm chart
-          command: |
-            export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
-            export CHART_VERSION="$NUMBER.<< pipeline.number >>"
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            helm push "$APP_NAME-$CHART_VERSION.tgz" "oci://$CHART_DEV_NAME"
-  build-helm-release:
-    executor: helm-builder
-    steps:
-      - checkout
-      - run:
-          name: Set version numbers in Helm
-          command: |
             export CHART_VERSION="0.0.<< pipeline.number >>"
             export APP_VERSION="0.0.0.<< pipeline.number >>"
             sed "s/(chartVersion)/$CHART_VERSION/" "$CHART_PATH/Chart.yaml" > "$CHART_PATH/Chart.yaml"
@@ -107,6 +82,31 @@ jobs:
           name: Push Helm chart
           command: |
             export CHART_VERSION="0.0.<< pipeline.number >>"
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+            helm push "$APP_NAME-$CHART_VERSION.tgz" "oci://$CHART_DEV_NAME"
+  build-helm-release:
+    executor: helm-builder
+    steps:
+      - checkout
+      - run:
+          name: Set version numbers in Helm
+          command: |
+            export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
+            export CHART_VERSION="$NUMBER.<< pipeline.number >>"
+            export APP_VERSION="$NUMBER.0.<< pipeline.number >>"
+            sed "s/(chartVersion)/$CHART_VERSION/" "$CHART_PATH/Chart.yaml" > "$CHART_PATH/Chart.yaml"
+            sed "s/(appVersion)/$APP_VERSION/" "$CHART_PATH/Chart.yaml" > "$CHART_PATH/Chart.yaml"
+      - run:
+          name: Package Helm chart
+          command: |
+            export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
+            export CHART_VERSION="$NUMBER.<< pipeline.number >>"
+            helm package $CHART_PATH
+      - run:
+          name: Push Helm chart
+          command: |
+            export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
+            export CHART_VERSION="$NUMBER.<< pipeline.number >>"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
             helm push "$APP_NAME-$CHART_VERSION.tgz" "oci://$CHART_NAME"
 
