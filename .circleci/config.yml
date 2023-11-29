@@ -6,16 +6,15 @@ executors:
   docker-builder:
     environment:
       IMAGE_NAME: ghcr.io/nltimv/karma-chameleon
-      CHART_PATH: ./charts/karma-chameleon
       GHCR_USERNAME: nltimv
     docker:
       - image: docker:20
     resource_class: small
   helm-builder:
     environment:
-      APP_NAME: karma-chameleon
-      CHART_NAME: ghcr.io/nltimv/karma-chameleon-helm
-      CHART_DEV_NAME: ghcr.io/nltimv/karma-chameleon-helm-dev
+      CHART_PREFIX: ghcr.io/nltimv/helm
+      CHART_NAME: karma-chameleon
+      CHART_DEV_NAME: karma-chameleon-dev
       CHART_PATH: ./charts/karma-chameleon
       GHCR_USERNAME: nltimv
     docker:
@@ -71,7 +70,7 @@ jobs:
           command: |
             export CHART_VERSION="0.0.<< pipeline.number >>"
             export APP_VERSION="0.0.0.<< pipeline.number >>"
-            sed -i -e "s/(chartVersion)/$CHART_VERSION/" -e "s/(appVersion)/$APP_VERSION/" "$CHART_PATH/Chart.yaml"
+            sed -i -e "s/(chartVersion)/$CHART_VERSION/" -e "s/(appVersion)/$APP_VERSION/" -e "s/(chartName)/$CHART_NAME" "$CHART_PATH/Chart.yaml"
       - run:
           name: Package Helm chart
           command: |
@@ -82,7 +81,7 @@ jobs:
           command: |
             export CHART_VERSION="0.0.<< pipeline.number >>"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            helm push "$APP_NAME-$CHART_VERSION.tgz" "oci://$CHART_DEV_NAME"
+            helm push "$CHART_DEV_NAME-$CHART_VERSION.tgz" "oci://$CHART_PREFIX/$CHART_DEV_NAME"
   build-helm-release:
     executor: helm-builder
     steps:
@@ -93,7 +92,7 @@ jobs:
             export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
             export CHART_VERSION="$NUMBER.<< pipeline.number >>"
             export APP_VERSION="$NUMBER.0.<< pipeline.number >>"
-            sed -i -e "s/(chartVersion)/$CHART_VERSION/" -e "s/(appVersion)/$APP_VERSION/" "$CHART_PATH/Chart.yaml"
+            sed -i -e "s/(chartVersion)/$CHART_VERSION/" -e "s/(appVersion)/$APP_VERSION/" -e "s/(chartName)/$CHART_NAME" "$CHART_PATH/Chart.yaml"
       - run:
           name: Package Helm chart
           command: |
@@ -106,7 +105,7 @@ jobs:
             export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
             export CHART_VERSION="$NUMBER.<< pipeline.number >>"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            helm push "$APP_NAME-$CHART_VERSION.tgz" "oci://$CHART_NAME"
+            helm push "$CHART_NAME-$CHART_VERSION.tgz" "oci://$CHART_PREFIX/$CHART_NAME"
 
 workflows:
   cicd:
