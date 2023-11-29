@@ -40,13 +40,10 @@ jobs:
           name: Load archived Docker image
           command: docker load -i /tmp/workspace/image.tar
       - run:
-          name: Set image name and version number
+          name: Publish Docker Image to GitHub Container Registry
           command: |
             export REVISION=$(echo "<< pipeline.git.revision >>" | awk '{print substr($0,0,7)}')
             export VERSION="0.0.0.<< pipeline.number >>-dev-$REVISION"
-      - run:
-          name: Publish Docker Image to GitHub Container Registry
-          command: |
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
             docker tag build:latest $IMAGE_NAME:$VERSION
             docker push $IMAGE_NAME:$VERSION
@@ -60,13 +57,10 @@ jobs:
           name: Load archived Docker image
           command: docker load -i /tmp/workspace/image.tar
       - run:
-          name: Set version number
-          command:
-            export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
-            export VERSION="$NUMBER.0.<< pipeline.number >>"
-      - run:
           name: Publish Docker Image to GitHub Container Registry
           command: |
+            export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
+            export VERSION="$NUMBER.0.<< pipeline.number >>"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
             docker tag build:latest $IMAGE_NAME:latest
             docker push $IMAGE_NAME:latest
