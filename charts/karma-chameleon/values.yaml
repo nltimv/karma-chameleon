@@ -14,7 +14,7 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-karma-chameleon:
+karmaChameleon:
   db:
     host: ""
     port: 5432
