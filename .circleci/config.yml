@@ -71,8 +71,7 @@ jobs:
           command: |
             export CHART_VERSION="0.0.<< pipeline.number >>"
             export APP_VERSION="0.0.0.<< pipeline.number >>"
-            sed "s/(chartVersion)/$CHART_VERSION/" "$CHART_PATH/Chart.yaml" | tee "$CHART_PATH/Chart.yaml"
-            sed "s/(appVersion)/$APP_VERSION/" "$CHART_PATH/Chart.yaml" | tee "$CHART_PATH/Chart.yaml"
+            sed -i -e "s/(chartVersion)/$CHART_VERSION/" -e "s/(appVersion)/$APP_VERSION/" "$CHART_PATH/Chart.yaml"
       - run:
           name: Package Helm chart
           command: |
@@ -94,8 +93,7 @@ jobs:
             export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
             export CHART_VERSION="$NUMBER.<< pipeline.number >>"
             export APP_VERSION="$NUMBER.0.<< pipeline.number >>"
-            sed "s/(chartVersion)/$CHART_VERSION/" "$CHART_PATH/Chart.yaml" | tee "$CHART_PATH/Chart.yaml"
-            sed "s/(appVersion)/$APP_VERSION/" "$CHART_PATH/Chart.yaml" | tee $CHART_PATH/Chart.yaml"
+            sed -i -e "s/(chartVersion)/$CHART_VERSION/" -e "s/(appVersion)/$APP_VERSION/" "$CHART_PATH/Chart.yaml"
       - run:
           name: Package Helm chart
           command: |
