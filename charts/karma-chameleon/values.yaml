@@ -14,6 +14,23 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+karma-chameleon:
+  db:
+    host: ""
+    port: 5432
+    databaseName: ""
+    username: ""
+    password: ""
+    existingSecretName: ""
+    secretKeyUsername: "username"
+    secretKeyPassword: "password"
+  slack:
+    appToken: ""
+    botToken: ""
+    existingSecretName: ""
+    secretKeyAppToken: "appToken"
+    secretKeyBotToken: "botToken"
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
