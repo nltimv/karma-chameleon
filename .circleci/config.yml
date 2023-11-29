@@ -14,7 +14,7 @@ executors:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  build:
+  build-docker-dev:
     executor: docker-publisher
     steps:
       - checkout
@@ -23,22 +23,6 @@ jobs:
           name: Build application Docker image
           command: |
             docker build -t build:latest .
-      - run:
-          name: Archive Docker image
-          command: docker save -o image.tar build:latest
-      - persist_to_workspace:
-          root: .
-          paths:
-            - ./image.tar
-  publish-dev:
-    executor: docker-publisher
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - setup_remote_docker
-      - run:
-          name: Load archived Docker image
-          command: docker load -i /tmp/workspace/image.tar
       - run:
           name: Publish Docker Image to GitHub Container Registry
           command: |
@@ -49,15 +33,15 @@ jobs:
             docker push $IMAGE_NAME:canary
             docker tag $IMAGE_NAME:canary $IMAGE_NAME:$VERSION
             docker push $IMAGE_NAME:$VERSION
-  publish-release:
+  build-docker-release:
     executor: docker-publisher
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
+      - checkout
       - setup_remote_docker
       - run:
-          name: Load archived Docker image
-          command: docker load -i /tmp/workspace/image.tar
+          name: Build application Docker image
+          command: |
+            docker build -t build:latest .
       - run:
           name: Publish Docker Image to GitHub Container Registry
           command: |
@@ -71,21 +55,13 @@ jobs:
 
 workflows:
   version: 2
-  build:
+  cicd:
     jobs:
-      - build:
-          filters:
-            tags:
-              only: /^v\d+\.\d+$/
-      - publish-dev:
-          requires:
-            - build
+      - build-docker-dev:
           filters:
             tags:
               ignore: /.*/
-      - publish-release:
-          requires:
-            - build
+      - build-docker-release:
           filters:
             branches:
               ignore: /.*/
