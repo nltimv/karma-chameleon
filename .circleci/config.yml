@@ -108,6 +108,8 @@ workflows:
     jobs:
       - build-docker-dev:
           filters:
+            branches:
+              ignore: main
             tags:
               ignore: /.*/
       - build-docker-release:
@@ -120,6 +122,8 @@ workflows:
           requires:
             - "build-docker-dev"
           filters:
+            branches:
+              ignore: main
             tags:
               ignore: /.*/
       - build-helm-release:
