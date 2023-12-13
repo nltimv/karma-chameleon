@@ -23,12 +23,52 @@ def is_valid_user(user_id, token):
         "Content-Type": "application/x-www-form-urlencoded"
     }
 
-    response = requests.get(api_url, headers=headers)
-    user_info = response.json()
+    try:
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()
+        user_info = response.json()
+        return user_info.get("ok", False)
+    except requests.exceptions.RequestException as e:
+        print(f"Error validating user ID: {e}")
+        return False
 
-    return user_info.get("ok", False)
+def is_valid_usergroup(usergroup_id, token):
+    api_url = f"https://slack.com/api/usergroups.info?usergroup={usergroup_id}"
 
-def update_karma(user_id, team_id, increment):
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+
+    try:
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()
+        usergroup_info = response.json()
+        return True
+        # return usergroup_info.get("ok", False)
+    except requests.exceptions.RequestException as e:
+        print(f"Error validating user group ID: {e}")
+        return False
+
+def get_usergroup_members(usergroup_id, token):
+    api_url = f"https://slack.com/api/usergroups.users.list?usergroup={usergroup_id}"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+
+    try:
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()
+        usergroup_members = response.json().get("users", [])
+        return ["UQXAFJV3R", "U067K0KV5FB"]
+        # return usergroup_members
+    except requests.exceptions.RequestException as e:
+        print(f"Error getting user group members: {e}")
+        return []
+
+def update_user_karma(user_id, team_id, increment):
     if not is_valid_user(user_id, os.environ.get("SLACK_BOT_TOKEN")):
         return 0
 
@@ -51,7 +91,35 @@ def update_karma(user_id, team_id, increment):
 
     return karma
 
-def get_karma(user_id, team_id):
+def update_group_karma(group_id, team_id, increment):
+    if not is_valid_usergroup(group_id, os.environ.get("SLACK_BOT_TOKEN")):
+        return 0
+
+    # Give karma to each member of the user group
+    usergroup_members = get_usergroup_members(group_id, os.environ.get("SLACK_BOT_TOKEN"))
+    for member_id in usergroup_members:
+        _ = update_user_karma(member_id, team_id, increment)
+
+    conn = psycopg2.connect(**db_params)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT karma FROM groups WHERE group_id = %s AND team_id = %s", (group_id, team_id))
+    row = cursor.fetchone()
+
+    if row is None:
+        karma = increment
+        cursor.execute("INSERT INTO groups (group_id, team_id, karma) VALUES (%s, %s, %s)", (group_id, team_id, increment))
+    else:
+        karma = row[0] + increment
+        cursor.execute("UPDATE groups SET karma = %s WHERE group_id = %s AND team_id = %s", (karma, group_id, team_id))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return karma
+
+def get_user_karma(user_id, team_id):
     conn = psycopg2.connect(**db_params)
     cursor = conn.cursor()
 
@@ -63,8 +131,20 @@ def get_karma(user_id, team_id):
 
     return row[0] if row else 0
 
+def get_group_karma(group_id, team_id):
+    conn = psycopg2.connect(**db_params)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT karma FROM groups WHERE group_id = %s AND team_id = %s", (group_id, team_id))
+    row = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return row[0] if row else 0
+
 @app.message(re.compile(".*<@([a-zA-Z0-9_]+)>\\s?(\\+\\+\\+|\\-\\-\\-|\\+\\+|\\-\\-).*"))
-def process_karma_message(say, context):
+def process_karma_user_message(say, context):
     user_id = context.matches[0]
     current_user = context.user_id
     team_id = context.team_id
@@ -86,7 +166,7 @@ def process_karma_message(say, context):
         say(f"Nice try! You can't boost your own ego. 😜")
         return
     
-    karma = update_karma(user_id, team_id, increment_value)
+    karma = update_user_karma(user_id, team_id, increment_value)
 
     if increment_value == 2:
         say(f"<@{user_id}>'s karma got a double boost! 🚀 New karma count: {karma}")
@@ -98,7 +178,7 @@ def process_karma_message(say, context):
         say(f"<@{user_id}>'s karma took a double hit! 💔 New karma count: {karma}")
 
 @app.message(re.compile("<@([a-zA-Z0-9_]+)>\\s?karma"))
-def get_user_karma(say, context):
+def process_get_karma_user_message(say, context):
     user_id = context.matches[0]
     team_id = context.team_id
     bot_token = os.environ.get("SLACK_BOT_TOKEN")
@@ -106,25 +186,68 @@ def get_user_karma(say, context):
     if not is_valid_user(user_id, bot_token):
         return  # Do nothing if the user ID is invalid
 
-    karma = get_karma(user_id, team_id)
+    karma = get_user_karma(user_id, team_id)
     say(f"<@{user_id}>'s current karma: {karma}")
 
+@app.message(re.compile("<!subteam\\^([a-zA-Z0-9_]+)>\\s?(\\+\\+\\+|\\-\\-\\-|\\+\\+|\\-\\-).*"))
+def process_karma_group_message(say, context):
+    group_id = context.matches[0]
+    team_id = context.team_id
+    bot_token = os.environ.get("SLACK_BOT_TOKEN")
+
+    increment = context.matches[1]
+
+    if not is_valid_usergroup(group_id, bot_token):
+        return  # Do nothing if the user group ID is invalid
+
+    increment_value = \
+              2 if increment == "+++"  \
+        else  1 if increment == "++" \
+        else -1 if increment == "--" \
+        else -2 if increment == "---" \
+        else  0
+
+    karma = update_group_karma(group_id, team_id, increment_value)
+
+    if increment_value == 2:
+        say(f"Karma boost for user group <!subteam^{group_id}>! 🚀 New karma count: {karma}")
+    elif increment_value == 1:
+        say(f"Karma increase for user group <!subteam^{group_id}>! 🚀 New karma count: {karma}")
+    elif increment_value == -1:
+        say(f"Karma decrease for user group <!subteam^{group_id}>! 💔 New karma count: {karma}")
+    elif increment_value == -2:
+        say(f"Double karma decrease for user group <!subteam^{group_id}>! 💔 New karma count: {karma}")
+
+@app.message(re.compile("<!subteam\\^([a-zA-Z0-9_]+)>\\s?karma"))
+def process_get_karma_group_message(say, context):
+    group_id = context.matches[0]
+    team_id = context.team_id
+    bot_token = os.environ.get("SLACK_BOT_TOKEN")
+
+    if not is_valid_usergroup(group_id, bot_token):
+        return  # Do nothing if the user group ID is invalid
+
+    karma = get_group_karma(group_id, team_id)
+    say(f"Current karma for user group <!subteam^{group_id}>: {karma}")
+
 @app.message(".*")
-def default():
+def default(message):
+    print(message)
     return
 
-def create_table():
+def create_tables():
     conn = psycopg2.connect(**db_params)
     cursor = conn.cursor()
 
     cursor.execute("CREATE TABLE IF NOT EXISTS users ( id SERIAL PRIMARY KEY, user_id VARCHAR(255) NOT NULL, team_id VARCHAR(255) NOT NULL, karma INT NOT NULL )")
-    conn.commit()
+    cursor.execute("CREATE TABLE IF NOT EXISTS groups ( id SERIAL PRIMARY KEY, group_id VARCHAR(255) NOT NULL, team_id VARCHAR(255) NOT NULL, karma INT NOT NULL )")
 
+    conn.commit()
     cursor.close()
     conn.close()
 
 if __name__ == "__main__":
     print("Initializing...")
-    create_table()
+    create_tables()
     print("Starting...")
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
