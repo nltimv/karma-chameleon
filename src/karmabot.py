@@ -169,12 +169,11 @@ def process_get_karma_user_message(say, context):
     karma = get_user_karma(user_id, team_id)
     say(f"<@{user_id}>'s current karma: {karma}")
 
-@app.message(re.compile(r"<!subteam\^([a-zA-Z0-9_]+)\|?[a-zA-Z0-9_\-\.]*>\s?(\+\+\+|\-\-\-|\+\+|\-\-).*"))
+@app.message(re.compile(r"<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-\.]*>\s?(\+\+\+|\-\-\-|\+\+|\-\-).*"))
 def process_karma_group_message(say, context):
     group_id = context.matches[0]
     team_id = context.team_id
     bot_token = os.environ.get("SLACK_BOT_TOKEN")
-    print(group_id)
 
     increment = context.matches[1]
 
@@ -212,12 +211,11 @@ def process_karma_group_message(say, context):
     elif increment_value == -2:
         say(f"The karma of <!subteam^{group_id}> and its members took a double hit! 💔 New group karma count: {karma}")
 
-@app.message(re.compile(r"<!subteam\^([a-zA-Z0-9_]+)\|?[a-zA-Z0-9_\-\.]*>\s?karma"))
+@app.message(re.compile(r"<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-\.]*>\s?karma"))
 def process_get_karma_group_message(say, context):
     group_id = context.matches[0]
     team_id = context.team_id
     bot_token = os.environ.get("SLACK_BOT_TOKEN")
-    print(group_id)
 
     usergroup_members = get_usergroup_members(group_id, bot_token)
 
