@@ -217,8 +217,11 @@ def process_get_karma_group_message(say, context):
     team_id = context.team_id
     bot_token = os.environ.get("SLACK_BOT_TOKEN")
 
-    if not is_valid_usergroup(group_id, bot_token):
-        return  # Do nothing if the user group ID is invalid
+    usergroup_members = get_usergroup_members(group_id, bot_token)
+
+    # Do nothing if the user group doesn't exist
+    if len(usergroup_members) == 0:
+        return
 
     karma = get_group_karma(group_id, team_id)
     say(f"Current karma for group <!subteam^{group_id}>: {karma}")
