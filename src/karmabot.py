@@ -44,8 +44,7 @@ def is_valid_usergroup(usergroup_id, token):
         response = requests.get(api_url, headers=headers)
         response.raise_for_status()
         usergroup_info = response.json()
-        return True
-        # return usergroup_info.get("ok", False)
+        return usergroup_info.get("ok", False)
     except requests.exceptions.RequestException as e:
         print(f"Error validating user group ID: {e}")
         return False
@@ -62,8 +61,7 @@ def get_usergroup_members(usergroup_id, token):
         response = requests.get(api_url, headers=headers)
         response.raise_for_status()
         usergroup_members = response.json().get("users", [])
-        return ["UQXAFJV3R", "U067K0KV5FB"]
-        # return usergroup_members
+        return usergroup_members
     except requests.exceptions.RequestException as e:
         print(f"Error getting user group members: {e}")
         return []
@@ -91,14 +89,15 @@ def update_user_karma(user_id, team_id, increment):
 
     return karma
 
-def update_group_karma(group_id, team_id, increment):
+def update_group_karma(group_id, team_id, increment, giver_user_id):
     if not is_valid_usergroup(group_id, os.environ.get("SLACK_BOT_TOKEN")):
         return 0
 
-    # Give karma to each member of the user group
+    # Give karma to each member of the user group, except the giver
     usergroup_members = get_usergroup_members(group_id, os.environ.get("SLACK_BOT_TOKEN"))
     for member_id in usergroup_members:
-        _ = update_user_karma(member_id, team_id, increment)
+        if member_id != giver_user_id or increment < 0:
+            _ = update_user_karma(member_id, team_id, increment)
 
     conn = psycopg2.connect(**db_params)
     cursor = conn.cursor()
@@ -207,16 +206,28 @@ def process_karma_group_message(say, context):
         else -2 if increment == "---" \
         else  0
 
-    karma = update_group_karma(group_id, team_id, increment_value)
+    usergroup_members = get_usergroup_members(group_id, bot_token)
+
+    # If the user giving karma is the only member of the group, send a sassy message
+    if len(usergroup_members) == 1 and usergroup_members[0] == context.user_id:
+        say(f"Nice try! Creating a user group for youself so you can get group karma? You're smart, but not smart enough! 😜")
+        return
+
+    # Give karma to each member of the user group, except the giver
+    for member_id in usergroup_members:
+        if member_id != context.user_id or increment_value < 0:
+            _ = update_user_karma(member_id, team_id, increment_value)
+
+    karma = update_group_karma(group_id, team_id, increment_value, context.user_id)
 
     if increment_value == 2:
-        say(f"Karma boost for user group <!subteam^{group_id}>! 🚀 New karma count: {karma}")
+        say(f"The karma of <!subteam^{group_id}> and its members got a double boost! 🚀 New group karma count: {karma}")
     elif increment_value == 1:
-        say(f"Karma increase for user group <!subteam^{group_id}>! 🚀 New karma count: {karma}")
+        say(f"The karma of <!subteam^{group_id}> and its members is on the rise! 🚀 New group karma count: {karma}")
     elif increment_value == -1:
-        say(f"Karma decrease for user group <!subteam^{group_id}>! 💔 New karma count: {karma}")
+        say(f"The karma of <!subteam^{group_id}> and its members took a hit! 💔 New group karma count: {karma}")
     elif increment_value == -2:
-        say(f"Double karma decrease for user group <!subteam^{group_id}>! 💔 New karma count: {karma}")
+        say(f"The karma of <!subteam^{group_id}> and its members took a double hit! 💔 New group karma count: {karma}")
 
 @app.message(re.compile("<!subteam\\^([a-zA-Z0-9_]+)>\\s?karma"))
 def process_get_karma_group_message(say, context):
@@ -228,11 +239,10 @@ def process_get_karma_group_message(say, context):
         return  # Do nothing if the user group ID is invalid
 
     karma = get_group_karma(group_id, team_id)
-    say(f"Current karma for user group <!subteam^{group_id}>: {karma}")
+    say(f"Current karma for group <!subteam^{group_id}>: {karma}")
 
 @app.message(".*")
-def default(message):
-    print(message)
+def default():
     return
 
 def create_tables():
