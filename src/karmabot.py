@@ -32,23 +32,6 @@ def is_valid_user(user_id, token):
         print(f"Error validating user ID: {e}")
         return False
 
-def is_valid_usergroup(usergroup_id, token):
-    api_url = f"https://slack.com/api/usergroups.info?usergroup={usergroup_id}"
-
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
-
-    try:
-        response = requests.get(api_url, headers=headers)
-        response.raise_for_status()
-        usergroup_info = response.json()
-        return usergroup_info.get("ok", False)
-    except requests.exceptions.RequestException as e:
-        print(f"Error validating user group ID: {e}")
-        return False
-
 def get_usergroup_members(usergroup_id, token):
     api_url = f"https://slack.com/api/usergroups.users.list?usergroup={usergroup_id}"
 
@@ -90,8 +73,6 @@ def update_user_karma(user_id, team_id, increment):
     return karma
 
 def update_group_karma(group_id, team_id, increment, giver_user_id):
-    if not is_valid_usergroup(group_id, os.environ.get("SLACK_BOT_TOKEN")):
-        return 0
 
     # Give karma to each member of the user group, except the giver
     usergroup_members = get_usergroup_members(group_id, os.environ.get("SLACK_BOT_TOKEN"))
@@ -196,9 +177,6 @@ def process_karma_group_message(say, context):
 
     increment = context.matches[1]
 
-    if not is_valid_usergroup(group_id, bot_token):
-        return  # Do nothing if the user group ID is invalid
-
     increment_value = \
               2 if increment == "+++"  \
         else  1 if increment == "++" \
@@ -207,6 +185,10 @@ def process_karma_group_message(say, context):
         else  0
 
     usergroup_members = get_usergroup_members(group_id, bot_token)
+
+    # Do nothing if the user group doesn't exist
+    if len(usergroup_members) == 0:
+        return
 
     # If the user giving karma is the only member of the group, send a sassy message
     if len(usergroup_members) == 1 and usergroup_members[0] == context.user_id:
