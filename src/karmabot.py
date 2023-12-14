@@ -73,13 +73,6 @@ def update_user_karma(user_id, team_id, increment):
     return karma
 
 def update_group_karma(group_id, team_id, increment, giver_user_id):
-
-    # Give karma to each member of the user group, except the giver
-    usergroup_members = get_usergroup_members(group_id, os.environ.get("SLACK_BOT_TOKEN"))
-    for member_id in usergroup_members:
-        if member_id != giver_user_id or increment < 0:
-            _ = update_user_karma(member_id, team_id, increment)
-
     conn = psycopg2.connect(**db_params)
     cursor = conn.cursor()
 
