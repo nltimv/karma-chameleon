@@ -3,6 +3,9 @@
 version: 2.1
 
 executors:
+  python-linter:
+    docker:
+      - image: python:3.11
   docker-builder:
     environment:
       IMAGE_NAME: ghcr.io/nltimv/karma-chameleon
@@ -23,6 +26,22 @@ executors:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
+  python-lint:
+    executor: python-linter
+    steps:
+      - checkout
+      - run:
+          run: Install requirements
+          command: |
+            python -m pip install --upgrade pip
+            python -m pip install -r src/requirements.txt
+      - run:
+          name: Pylint - Analyze code
+          command: |
+            python -m pylint -ry -dC0301 -ftext src/karmabot.py | tee pylint-results.txt
+      - store_artifacts:
+          name: Save results file
+          path: ./pylint-results.txt
   build-docker-dev:
     executor: docker-builder
     steps:
@@ -106,13 +125,21 @@ jobs:
 workflows:
   cicd:
     jobs:
+      - python-lint:
+          filters:
+            branches:
+              ignore: main
       - build-docker-dev:
+          requires:
+            - python-lint
           filters:
             branches:
               ignore: main
             tags:
               ignore: /.*/
       - build-docker-release:
+          requires:
+            - python-lint
           filters:
             branches:
               ignore: /.*/
