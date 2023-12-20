@@ -3,7 +3,7 @@
 version: 2.1
 
 executors:
-  python-linter:
+  linter:
     docker:
       - image: python:3.11
   docker-builder:
@@ -26,8 +26,8 @@ executors:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  python-lint:
-    executor: python-linter
+  lint:
+    executor: linter
     steps:
       - checkout
       - run:
@@ -36,12 +36,9 @@ jobs:
             python -m pip install --upgrade pip
             python -m pip install -r src/requirements.txt
       - run:
-          name: Pylint - Analyze code
+          name: Pre-commit - Analyze code
           command: |
-            python -m pylint -ry -dC0301 -ftext src/karmabot.py | tee pylint-results.txt
-      - store_artifacts:
-          name: Save results file
-          path: ./pylint-results.txt
+            python -m pre_commit run -v --all-files
   build-docker-dev:
     executor: docker-builder
     steps:
@@ -125,13 +122,13 @@ jobs:
 workflows:
   cicd:
     jobs:
-      - python-lint:
+      - lint:
           filters:
             branches:
               ignore: main
       - build-docker-dev:
           requires:
-            - python-lint
+            - lint
           filters:
             branches:
               ignore: main
@@ -139,7 +136,7 @@ workflows:
               ignore: /.*/
       - build-docker-release:
           requires:
-            - python-lint
+            - lint
           filters:
             branches:
               ignore: /.*/
