@@ -3,10 +3,6 @@ display_information:
   description: Spreading good vibes, one karma leap at a time! 🦎✨
   background_color: "#242f36"
 features:
-  app_home:
-    home_tab_enabled: false
-    messages_tab_enabled: true
-    messages_tab_read_only_enabled: true
   bot_user:
     display_name: Karma Chameleon
     always_online: true
@@ -21,9 +17,9 @@ oauth_config:
       - groups:read
       - usergroups:read
       - users:read
-      - im:write
-      - im:read
       - im:history
+      - im:read
+      - im:write
 settings:
   event_subscriptions:
     bot_events:
