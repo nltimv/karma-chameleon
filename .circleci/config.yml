@@ -3,6 +3,9 @@
 version: 2.1
 
 executors:
+  linter:
+    docker:
+      - image: python:3.11
   docker-builder:
     environment:
       IMAGE_NAME: ghcr.io/nltimv/karma-chameleon
@@ -23,7 +26,20 @@ executors:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  build-docker-dev:
+  lint:
+    executor: linter
+    steps:
+      - checkout
+      - run:
+          run: Install requirements
+          command: |
+            python -m pip install --upgrade pip
+            python -m pip install -r src/requirements.txt
+      - run:
+          name: Pre-commit - Analyze code
+          command: |
+            python -m pre_commit run -v --all-files
+  build-docker-main:
     executor: docker-builder
     steps:
       - checkout
@@ -61,7 +77,7 @@ jobs:
             docker push $IMAGE_NAME:latest
             docker tag $IMAGE_NAME:latest $IMAGE_NAME:$VERSION
             docker push $IMAGE_NAME:$VERSION
-  build-helm-dev:
+  build-helm-main:
     executor: helm-builder
     steps:
       - checkout
@@ -104,28 +120,54 @@ jobs:
             helm push "$CHART_NAME-$CHART_VERSION.tgz" "oci://$CHART_PREFIX"
 
 workflows:
-  cicd:
+  cicd-dev:
     jobs:
-      - build-docker-dev:
+      - lint:
           filters:
             branches:
               ignore: main
             tags:
               ignore: /.*/
-      - build-docker-release:
+  cicd-main:
+    jobs:
+      - lint:
+          filters:
+            branches:
+              only: main
+            tags:
+              ignore: /.*/
+      - build-docker-main:
+          requires:
+            - lint
+          filters:
+            branches:
+              only: main
+            tags:
+              ignore: /.*/
+      - build-helm-main:
+          requires:
+            - "build-docker-main"
+          filters:
+            branches:
+              only: main
+            tags:
+              ignore: /.*/
+  release:
+    jobs:
+      - lint:
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+$/
-      - build-helm-dev:
+      - build-docker-release:
           requires:
-            - "build-docker-dev"
+            - lint
           filters:
             branches:
-              ignore: main
-            tags:
               ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+$/
       - build-helm-release:
           requires:
             - "build-docker-release"
