@@ -122,16 +122,13 @@ jobs:
 workflows:
   cicd:
     jobs:
-      - lint:
-          filters:
-            branches:
-              ignore: main
+      - lint
       - build-docker-dev:
           requires:
             - lint
           filters:
             branches:
-              ignore: main
+              only: main
             tags:
               ignore: /.*/
       - build-docker-release:
@@ -147,7 +144,7 @@ workflows:
             - "build-docker-dev"
           filters:
             branches:
-              ignore: main
+              only: main
             tags:
               ignore: /.*/
       - build-helm-release:
