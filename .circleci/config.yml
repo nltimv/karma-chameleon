@@ -16,9 +16,8 @@ executors:
   helm-builder:
     environment:
       CHART_PREFIX: ghcr.io/nltimv/helm
-      CHART_NAME: karma-chameleon
-      CHART_DEV_NAME: karma-chameleon-dev
       CHART_PATH: ./charts/karma-chameleon
+      CHART_NAME: karma-chameleon
       GHCR_USERNAME: nltimv
     docker:
       - image: cimg/deploy:2023.09
@@ -31,7 +30,7 @@ jobs:
     steps:
       - checkout
       - run:
-          run: Install requirements
+          name: Install requirements
           command: |
             python -m pip install --upgrade pip
             python -m pip install -r src/requirements.txt
@@ -77,26 +76,6 @@ jobs:
             docker push $IMAGE_NAME:latest
             docker tag $IMAGE_NAME:latest $IMAGE_NAME:$VERSION
             docker push $IMAGE_NAME:$VERSION
-  build-helm-main:
-    executor: helm-builder
-    steps:
-      - checkout
-      - run:
-          name: Set version numbers in Helm
-          command: |
-            export REVISION=$(echo "<< pipeline.git.revision >>" | awk '{print substr($0,0,7)}')
-            export CHART_VERSION="0.0.<< pipeline.number >>"
-            export APP_VERSION="0.0.0.<< pipeline.number >>-dev-$REVISION"
-            sed -i -e "s/(chartVersion)/$CHART_VERSION/" -e "s/(appVersion)/$APP_VERSION/" -e "s/(chartName)/$CHART_DEV_NAME/" "$CHART_PATH/Chart.yaml"
-      - run:
-          name: Package Helm chart
-          command: helm package $CHART_PATH
-      - run:
-          name: Push Helm chart
-          command: |
-            export CHART_VERSION="0.0.<< pipeline.number >>"
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            helm push "$CHART_DEV_NAME-$CHART_VERSION.tgz" "oci://$CHART_PREFIX"
   build-helm-release:
     executor: helm-builder
     steps:
@@ -107,7 +86,7 @@ jobs:
             export NUMBER=$(echo "<< pipeline.git.tag >>" | sed 's/v//')
             export CHART_VERSION="$NUMBER.<< pipeline.number >>"
             export APP_VERSION="$NUMBER.0.<< pipeline.number >>"
-            sed -i -e "s/(chartVersion)/$CHART_VERSION/" -e "s/(appVersion)/$APP_VERSION/" -e "s/(chartName)/$CHART_NAME/" "$CHART_PATH/Chart.yaml"
+            sed -i -e "s/^version: .*$/version: $CHART_VERSION/" -e "s/^appVersion: .*$/appVersion: \"$APP_VERSION\"/" "$CHART_PATH/Chart.yaml"
       - run:
           name: Package Helm chart
           command: helm package $CHART_PATH
@@ -139,14 +118,6 @@ workflows:
       - build-docker-main:
           requires:
             - lint
-          filters:
-            branches:
-              only: main
-            tags:
-              ignore: /.*/
-      - build-helm-main:
-          requires:
-            - "build-docker-main"
           filters:
             branches:
               only: main
