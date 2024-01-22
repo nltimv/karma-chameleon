@@ -15,15 +15,16 @@ The Helm chart is the recommended way to install the bot on a production environ
 
 The Helm chart can be deployed using the following command (filling in the placeholders with your own values):
 ```
- $ helm install -n karma-chameleon --create-namespace --wait \
-   karma-chameleon oci://ghcr.io/nltimv/helm/karma-chameleon \
-   --set karmaChameleon.db.databaseName=<database name>
-   --set karmaChameleon.db.host=<PostgreSQL server host/ip>
-   --set karmaChameleon.db.port=<PostgreSQL server port (if not 5432)>
-   --set karmaChameleon.db.username=<database username>
-   --set karmaChameleon.db.password=<database password>
-   --set karmaChameleon.slack.appToken<your Slack app token>
-   --set karmaChameleon.slack.botToken=<your Slack bot token>
+ $ helm install karma-chameleon \
+   oci://ghcr.io/nltimv/helm/karma-chameleon \
+   --set karmaChameleon.db.databaseName=<database name> \
+   --set karmaChameleon.db.host=<PostgreSQL server host/ip> \
+   --set karmaChameleon.db.port=<PostgreSQL server port (if not 5432)> \
+   --set karmaChameleon.db.username=<database username> \
+   --set karmaChameleon.db.password=<database password> \
+   --set karmaChameleon.slack.appToken<your Slack app token> \
+   --set karmaChameleon.slack.botToken=<your Slack bot token> \
+   -n karma-chameleon --create-namespace --wait
 ```
 
 For more details about values, refer to the [values.yaml](charts/karma-chameleon/values.yaml) file.
