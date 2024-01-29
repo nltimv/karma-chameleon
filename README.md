@@ -2,7 +2,7 @@
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/nltimv/karma-chameleon/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/nltimv/karma-chameleon/tree/main) [![license: MIT license](https://img.shields.io/badge/license-MIT%20license-blue.svg)](LICENSE) [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 
-![Logo](assets/img/logo.jpg)
+<img src="assets/img/logo.jpg" width="200"/>
 
 > Spreading good vibes, one karma leap at a time! 🦎✨
 
