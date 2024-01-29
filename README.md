@@ -1,8 +1,10 @@
 # Karma Chameleon
 
-> Spreading good vibes, one karma leap at a time! 🦎✨
-
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/nltimv/karma-chameleon/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/nltimv/karma-chameleon/tree/main) [![license: MIT license](https://img.shields.io/badge/license-MIT%20license-blue.svg)](LICENSE) [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+
+![Logo](assets/img/logo.jpg){width=200}
+
+> Spreading good vibes, one karma leap at a time! 🦎✨
 
 Karma Chameleon is a bot for Slack teams that enables users to give and receive karma points. Users can boost the karma of individual team members or entire user groups, fostering positivity and recognition within the team. The bot stores karma information in a PostgreSQL database. Most of the code has been generated using ChatGPT. Give karma, spread good vibes, and let the Slack Karma Bot enhance your team's collaborative spirit!
 
