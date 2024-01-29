@@ -2,7 +2,7 @@
 
 > Spreading good vibes, one karma leap at a time! 🦎✨
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/nltimv/karma-chameleon/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/nltimv/karma-chameleon/tree/main) [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/nltimv/karma-chameleon/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/nltimv/karma-chameleon/tree/main) [![license: MIT license](https://img.shields.io/badge/license-MIT%20license-blue.svg)](LICENSE) [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 
 Karma Chameleon is a bot for Slack teams that enables users to give and receive karma points. Users can boost the karma of individual team members or entire user groups, fostering positivity and recognition within the team. The bot stores karma information in a PostgreSQL database. Most of the code has been generated using ChatGPT. Give karma, spread good vibes, and let the Slack Karma Bot enhance your team's collaborative spirit!
 
@@ -71,3 +71,33 @@ Replace `@group` with the handle of the user group you want to do karma operatio
 | `@group --`    | Takes away one karma from @group and all its members.                                                                     |
 | `@group ---`   | Takes away two karma from @group and all its members.                                                                     |
 | `@group karma` | Returns the current karma of @group.                                                                                      |
+
+## Development
+
+To start development of the bot, fork and check out the repo and install all dependencies. Make sure you have Python 3 installed on your computer.
+
+```
+$ git clone https://github.com/<username|org>/karma-chameleon.git
+$ cd karma-chameleon
+$ python -m pip install -r requirements.txt
+```
+
+### Pre-commit
+
+This repository has pre-commit hooks configured to ensure code quality and security. Make sure the changes you submit pass all checks. To run the hooks on every commit, run this from the root of the repository:
+```
+$ pre-commit install
+```
+For more information about pre-commit, see [pre-commit.com](https://pre-commit.com/).
+
+### Contributing
+
+First of all, thank you for your interest in this project!
+
+Before you start making changes, it is good practice to create an issue first describing the changes you want to make. There can be many reason I won't accept changes (for example, the change could go against the direction I want this project to go). By creating an issue, you can get an indication of whether your proposed changes/features are desirable, before you spend your time ans effort into developing something.
+
+Before you submit a pull request, make sure you at least check the following:
+ 1. Check that pre-commit does not give any errors; (see above)
+ 2. Check that the Helm chart has been updated, if applicable;
+ 3. Make sure that both new installations and upgrades of existing installations work with your changes;
+ 4. Make sure to update this README, if applicable
