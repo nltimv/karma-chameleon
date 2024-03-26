@@ -5,20 +5,6 @@ This is a Slack bot that allows users to give and receive karma points.
  Karma can be given to individual users or to entire user groups.
   The bot stores karma information in a PostgreSQL database.
 
-Functions:
-- is_valid_user(user_id, token): Check if a user is valid.
-- get_usergroup_members(usergroup_id, token): Get a list of user IDs belonging to a user group.
-- update_user_karma(user_id, team_id, increment): Update the karma of a user.
-- update_group_karma(group_id, team_id, increment): Update the karma of a user group.
-- get_user_karma(user_id, team_id): Get the karma of a user.
-- get_group_karma(group_id, team_id): Get the karma of a user group.
-- process_karma_user_message(say, context): Process a karma message for an individual user.
-- process_get_karma_user_message(say, context): Process a request to get the karma of an individual user.
-- process_karma_group_message(say, context): Process a karma message for a user group.
-- process_get_karma_group_message(say, context): Process a request to get the karma of a user group.
-- default(): Default handler for unmatched messages.
-- create_tables(): Create database tables if they do not exist.
-
 To run the bot, execute this script.
 Make sure to set the required environment variables,
 including SLACK_BOT_TOKEN, DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, and DB_PORT.
@@ -42,7 +28,7 @@ db_params = {
 }
 
 
-def is_valid_user(user_id: str, token: str):
+def is_valid_user(user_id: str, token: str) -> bool:
     """
         Check if a user is valid.
 
@@ -71,7 +57,7 @@ def is_valid_user(user_id: str, token: str):
         return False
 
 
-def get_usergroup_members(usergroup_id: str, token: str):
+def get_usergroup_members(usergroup_id: str, token: str) -> list:
     """
         Get a list of user IDs belonging to a user group.
 
@@ -100,7 +86,7 @@ def get_usergroup_members(usergroup_id: str, token: str):
         return []
 
 
-def update_user_karma(user_id: str, team_id: str, increment: int):
+def update_user_karma(user_id: str, team_id: str, increment: int, check_user: bool) -> int:
     """
         Update the karma of a user.
 
@@ -108,13 +94,14 @@ def update_user_karma(user_id: str, team_id: str, increment: int):
         - user_id (str): The user ID whose karma is updated.
         - team_id (str): The Slack team ID.
         - increment (int): The amount by which to increment the karma.
+        - check_user (bool): Whether a check that the user exists needs to be performed.
 
         Returns:
         - int: The updated karma count.
     """
-
-    if not is_valid_user(user_id, os.environ.get("SLACK_BOT_TOKEN")):
-        return 0
+    if check_user:
+        if not is_valid_user(user_id, os.environ.get("SLACK_BOT_TOKEN")):
+            return 0
 
     conn = psycopg2.connect(**db_params)
     cursor = conn.cursor()
@@ -139,7 +126,7 @@ def update_user_karma(user_id: str, team_id: str, increment: int):
     return karma
 
 
-def update_group_karma(group_id: str, team_id: str, increment: int):
+def update_group_karma(group_id: str, team_id: str, increment: int) -> int:
     """
        Update the karma of a user group.
 
@@ -175,7 +162,7 @@ def update_group_karma(group_id: str, team_id: str, increment: int):
     return karma
 
 
-def get_user_karma(user_id: str, team_id: str):
+def get_user_karma(user_id: str, team_id: str) -> int:
     """
         Get the karma of a user.
 
@@ -200,7 +187,7 @@ def get_user_karma(user_id: str, team_id: str):
     return row[0] if row else 0
 
 
-def get_group_karma(group_id: str, team_id: str):
+def get_group_karma(group_id: str, team_id: str) -> int:
     """
         Get the karma of a user group.
 
@@ -226,7 +213,7 @@ def get_group_karma(group_id: str, team_id: str):
 
 
 @app.message(re.compile(r".*<@([a-zA-Z0-9_]+)>\s?(\+\+\+|---|\+\+|--).*"))
-def process_karma_user_message(say, context):
+def process_karma_user_message(say, context) -> None:
     """
        Process a karma message for an individual user.
 
@@ -256,7 +243,7 @@ def process_karma_user_message(say, context):
         say("Nice try! You can't boost your own ego. 😜")
         return
 
-    karma = update_user_karma(user_id, team_id, increment_value)
+    karma = update_user_karma(user_id, team_id, increment_value, True)
 
     if increment_value == 2:
         say(f"<@{user_id}>'s karma got a double boost! 🚀 New karma count: {karma}")
@@ -269,7 +256,7 @@ def process_karma_user_message(say, context):
 
 
 @app.message(re.compile(r"<@([a-zA-Z0-9_]+)>\s?karma"))
-def process_get_karma_user_message(say, context):
+def process_get_karma_user_message(say, context) -> None:
     """
        Process a request to get the karma of an individual user.
 
@@ -290,7 +277,7 @@ def process_get_karma_user_message(say, context):
 
 
 @app.message(re.compile(r"<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-.]*>\s?(\+\+\+|---|\+\+|--).*"))
-def process_karma_group_message(say, context):
+def process_karma_group_message(say, context) -> None:
     """
         Process a karma message for a user group.
 
@@ -326,7 +313,7 @@ def process_karma_group_message(say, context):
     # Give karma to each member of the user group, except the giver
     for member_id in usergroup_members:
         if member_id != context.user_id or increment_value < 0:
-            _ = update_user_karma(member_id, team_id, increment_value)
+            _ = update_user_karma(member_id, team_id, increment_value, False)
 
     karma = update_group_karma(group_id, team_id, increment_value)
 
@@ -341,7 +328,7 @@ def process_karma_group_message(say, context):
 
 
 @app.message(re.compile(r"<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-.]*>\s?karma"))
-def process_get_karma_group_message(say, context):
+def process_get_karma_group_message(say, context) -> None:
     """
         Process a request to get the karma of a user group.
 
@@ -365,7 +352,7 @@ def process_get_karma_group_message(say, context):
 
 
 @app.message(".*")
-def default():
+def default_msg() -> None:
     """
         Default handler for unmatched messages.
     """
@@ -373,7 +360,16 @@ def default():
     return
 
 
-def create_tables():
+@app.event("message")
+def default_msg_event() -> None:
+    """
+        Default handler for unmatched message events.
+    """
+
+    return
+
+
+def create_tables() -> None:
     """
        Create database tables if they do not exist.
     """
