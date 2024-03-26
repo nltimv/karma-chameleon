@@ -5,20 +5,6 @@ This is a Slack bot that allows users to give and receive karma points.
  Karma can be given to individual users or to entire user groups.
   The bot stores karma information in a PostgreSQL database.
 
-Functions:
-- is_valid_user(user_id, token): Check if a user is valid.
-- get_usergroup_members(usergroup_id, token): Get a list of user IDs belonging to a user group.
-- update_user_karma(user_id, team_id, increment): Update the karma of a user.
-- update_group_karma(group_id, team_id, increment): Update the karma of a user group.
-- get_user_karma(user_id, team_id): Get the karma of a user.
-- get_group_karma(group_id, team_id): Get the karma of a user group.
-- process_karma_user_message(say, context): Process a karma message for an individual user.
-- process_get_karma_user_message(say, context): Process a request to get the karma of an individual user.
-- process_karma_group_message(say, context): Process a karma message for a user group.
-- process_get_karma_group_message(say, context): Process a request to get the karma of a user group.
-- default(): Default handler for unmatched messages.
-- create_tables(): Create database tables if they do not exist.
-
 To run the bot, execute this script.
 Make sure to set the required environment variables,
 including SLACK_BOT_TOKEN, DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, and DB_PORT.
@@ -365,9 +351,18 @@ def process_get_karma_group_message(say, context):
 
 
 @app.message(".*")
-def default():
+def default_msg():
     """
         Default handler for unmatched messages.
+    """
+
+    return
+
+
+@app.event("message")
+def default_msg_event():
+    """
+        Default handler for unmatched message events.
     """
 
     return
