@@ -76,7 +76,28 @@ jobs:
             docker push $IMAGE_NAME:latest
             docker tag $IMAGE_NAME:latest $IMAGE_NAME:$VERSION
             docker push $IMAGE_NAME:$VERSION
-  build-helm-release:
+  publish-helm-main:
+    executor: helm-builder
+    steps:
+      - checkout
+      - run:
+          name: Set version numbers in Helm
+          command: |
+            export REVISION=$(echo "<< pipeline.git.revision >>" | awk '{print substr($0,0,7)}')
+            export CHART_VERSION="0.0.<< pipeline.number >>"
+            export APP_VERSION="0.0.0.<< pipeline.number >>-dev-$REVISION"
+            sed -i -e "s/^version: .*$/version: $CHART_VERSION/" -e "s/^appVersion: .*$/appVersion: \"$APP_VERSION\"/" -e "s/^name: $CHART_NAME/name: $CHART_NAME-dev/" "$CHART_PATH/Chart.yaml"
+      - run:
+          name: Package Helm chart
+          command: helm package $CHART_PATH
+      - run:
+          name: Push Helm chart
+          command: |
+            export REVISION=$(echo "<< pipeline.git.revision >>" | awk '{print substr($0,0,7)}')
+            export CHART_VERSION="0.0.<< pipeline.number >>"
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+            helm push "$CHART_NAME-dev-$CHART_VERSION.tgz" "oci://$CHART_PREFIX"
+  publish-helm-release:
     executor: helm-builder
     steps:
       - checkout
@@ -123,6 +144,14 @@ workflows:
               only: main
             tags:
               ignore: /.*/
+      - publish-helm-main:
+          requires:
+            - "build-docker-main"
+          filters:
+            branches:
+              only: main
+            tags:
+              ignore: /.*/
   release:
     jobs:
       - lint:
@@ -139,7 +168,7 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+$/
-      - build-helm-release:
+      - publish-helm-release:
           requires:
             - "build-docker-release"
           filters:
