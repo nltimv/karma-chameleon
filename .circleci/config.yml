@@ -152,6 +152,12 @@ workflows:
               ignore: main
             tags:
               ignore: /.*/
+      - build-test-slack:
+          filters:
+            branches:
+              ignore: main
+            tags:
+              ignore: /.*/
   cicd-main:
     jobs:
       - lint:
@@ -163,9 +169,9 @@ workflows:
       - build-test-slack:
           filters:
             branches:
-              ignore: /.*/
+              only: main
             tags:
-              only: /^v\d+\.\d+$/
+              ignore: /.*/
       - build-slack-docker-main:
           requires:
             - lint
