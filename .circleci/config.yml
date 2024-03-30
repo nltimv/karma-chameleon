@@ -6,6 +6,9 @@ executors:
   linter:
     docker:
       - image: python:3.11
+  go-builder:
+    docker:
+      - image: cimg/go:1.22.1
   docker-builder:
     environment:
       IMAGE_NAME: ghcr.io/nltimv/karma-chameleon
@@ -33,12 +36,33 @@ jobs:
           name: Install requirements
           command: |
             python -m pip install --upgrade pip
-            python -m pip install -r src/requirements.txt
+            python -m pip install pre-commit
       - run:
           name: Pre-commit - Analyze code
           command: |
             python -m pre_commit run -v --all-files
-  build-docker-main:
+  build-test-slack:
+    executor: go-builder
+    steps:
+      - checkout
+      - run: 
+          name: Change directory
+          command: cd slack
+      - run:
+          name: Build slack using Go
+          command: make build
+      - run:
+          name: Run tests using Go
+          command: make test
+      - store_test_results:
+          path: results.xml
+      - run:
+          name: Run test coverage analysis using Go
+          command: make cover
+      - store_artifacts:
+          path: cover_results
+      
+  build-slack-docker-main:
     executor: docker-builder
     steps:
       - checkout
@@ -57,7 +81,7 @@ jobs:
             docker push $IMAGE_NAME:canary
             docker tag $IMAGE_NAME:canary $IMAGE_NAME:$VERSION
             docker push $IMAGE_NAME:$VERSION
-  build-docker-release:
+  build-slack-docker-release:
     executor: docker-builder
     steps:
       - checkout
@@ -136,9 +160,16 @@ workflows:
               only: main
             tags:
               ignore: /.*/
-      - build-docker-main:
+      - build-test-slack:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+$/
+      - build-slack-docker-main:
           requires:
             - lint
+            - build-test-slack
           filters:
             branches:
               only: main
@@ -146,7 +177,7 @@ workflows:
               ignore: /.*/
       - publish-helm-main:
           requires:
-            - "build-docker-main"
+            - "build-slack-docker-main"
           filters:
             branches:
               only: main
@@ -160,9 +191,16 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+$/
-      - build-docker-release:
+      - build-test-slack:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+$/
+      - build-slack-docker-release:
           requires:
             - lint
+            - build-test-slack
           filters:
             branches:
               ignore: /.*/
@@ -170,7 +208,7 @@ workflows:
               only: /^v\d+\.\d+$/
       - publish-helm-release:
           requires:
-            - "build-docker-release"
+            - "build-slack-docker-release"
           filters:
             branches:
               ignore: /.*/

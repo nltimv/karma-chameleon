@@ -1,18 +1,4 @@
 repos:
-  - repo: local
-    hooks:
-      - id: pylint
-        name: pylint
-        entry: python -m pylint
-        language: system
-        files: src/.*\.py
-        args:
-          - -dC0301
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.6
-    hooks:
-      - id: bandit
-        files: src/.*\.py
   - repo: https://github.com/AleksaC/circleci-cli-py
     rev: v0.1.29658
     hooks:
