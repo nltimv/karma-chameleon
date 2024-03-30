@@ -23,7 +23,7 @@ test:  ## Run all tests
 cover:  ## Run test coverage suite
 	@mkdir -p cover_results
 	@go test ./... --coverprofile=cover_results/cov.out
-	@go tool cover --html=cov.out -o cover_results/cov.html
+	@go tool cover --html=cover_results/cov.out -o cover_results/cov.html
 
 build:  ## Builds the application
 	@CGO_ENABLED=${CGO_ENABLED} go build ${GO_FLAGS} \
