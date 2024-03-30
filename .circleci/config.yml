@@ -43,11 +43,10 @@ jobs:
             python -m pre_commit run -v --all-files
   build-test-slack:
     executor: go-builder
+    working_directory: ~/slack
     steps:
-      - checkout
-      - run: 
-          name: Change directory
-          command: cd slack
+      - checkout:
+          path: "~"
       - run:
           name: Build slack using Go
           command: make build
