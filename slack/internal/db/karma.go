@@ -34,6 +34,20 @@ func UpdateUserKarma(userID string, teamID string, increment int) (int, error) {
 	return karma, nil
 }
 
+func GetUserKarma(groupID, teamID string) int {
+	var karma int
+	row := db.QueryRow("SELECT karma FROM users WHERE user_id = $1 AND team_id = $2", groupID, teamID)
+	if err := row.Scan(&karma); err != nil {
+		if err == sql.ErrNoRows {
+			return 0
+		}
+		log.Println("Error scanning user karma: ", err)
+		return 0
+	}
+
+	return karma
+}
+
 func UpdateGroupKarma(groupID, teamID string, increment int) int {
 	var karma int
 	row := db.QueryRow("SELECT karma FROM groups WHERE group_id = $1 AND team_id = $2", groupID, teamID)
@@ -56,6 +70,20 @@ func UpdateGroupKarma(groupID, teamID string, increment int) int {
 			log.Println("Error updating group karma: ", err)
 			return 0
 		}
+	}
+
+	return karma
+}
+
+func GetGroupKarma(groupID, teamID string) int {
+	var karma int
+	row := db.QueryRow("SELECT karma FROM groups WHERE group_id = $1 AND team_id = $2", groupID, teamID)
+	if err := row.Scan(&karma); err != nil {
+		if err == sql.ErrNoRows {
+			return 0
+		}
+		log.Println("Error scanning group karma: ", err)
+		return 0
 	}
 
 	return karma

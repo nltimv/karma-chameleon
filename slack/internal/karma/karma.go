@@ -1,4 +1,4 @@
-package messagehandler
+package karma
 
 import (
 	"fmt"
@@ -10,33 +10,32 @@ import (
 	"nltimv.com/karma-chameleon/slack/internal/slack"
 )
 
-func ProcessMessage(ev *slackevents.MessageEvent) {
-	reUserKarma := regexp.MustCompile(`<@([a-zA-Z0-9_]+)>\s?(\+\+\+|---|\+\+|--)`)
-	reGroupKarma := regexp.MustCompile(`<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-.]*>\s?(\+\+\+|---|\+\+|--)`)
+func ProcessGetUserKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
+	matches := re.FindStringSubmatch(ev.Text)
+	userID := matches[1]
 
-	if reUserKarma.MatchString(ev.Text) {
-		processUserKarma(ev, reUserKarma)
-	} else if reGroupKarma.MatchString(ev.Text) {
-		processGroupKarma(ev, reGroupKarma)
-	}
+	karma := db.GetUserKarma(userID, ev.UserTeam)
+
+	response := fmt.Sprintf("<@%s>'s current karma: %d", userID, karma)
+	slack.Say(response, ev.Channel)
 }
 
-func processUserKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
+func ProcessGetGroupKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
+	matches := re.FindStringSubmatch(ev.Text)
+	groupID := matches[1]
+
+	karma := db.GetGroupKarma(groupID, ev.UserTeam)
+
+	response := fmt.Sprintf("Current karma for group <!subteam^%s>: %d", groupID, karma)
+	slack.Say(response, ev.Channel)
+}
+
+func ProcessUserKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 	matches := re.FindStringSubmatch(ev.Text)
 	userID := matches[1]
 	increment := matches[2]
 
-	incrementValue := 0
-	switch increment {
-	case "+++":
-		incrementValue = 2
-	case "++":
-		incrementValue = 1
-	case "---":
-		incrementValue = -2
-	case "--":
-		incrementValue = -1
-	}
+	incrementValue := getIncrement(increment)
 
 	if incrementValue == 0 {
 		return
@@ -55,9 +54,11 @@ func processUserKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 			}
 		} else {
 			slack.Say("Nice try! You can't boost your own ego. 😜", ev.Channel)
+			return
 		}
 	} else {
 		fmt.Printf("Unknown user ID '%v'!\n", userID)
+		return
 	}
 
 	var response string
@@ -75,22 +76,12 @@ func processUserKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 	slack.Say(response, ev.Channel)
 }
 
-func processGroupKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
+func ProcessGroupKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 	matches := re.FindStringSubmatch(ev.Text)
 	groupID := matches[1]
 	increment := matches[2]
 
-	incrementValue := 0
-	switch increment {
-	case "+++":
-		incrementValue = 2
-	case "++":
-		incrementValue = 1
-	case "---":
-		incrementValue = -2
-	case "--":
-		incrementValue = -1
-	}
+	incrementValue := getIncrement(increment)
 
 	if incrementValue == 0 {
 		return
@@ -102,6 +93,7 @@ func processGroupKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 		return
 	} else if len(usergroupMembers) == 1 && usergroupMembers[0] == ev.User {
 		slack.Say("Nice try! Creating a user group for youself so you can get group karma? You're smart, but not smart enough! 😜", ev.Channel)
+		return
 	}
 
 	var err error
@@ -131,5 +123,22 @@ func processGroupKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 	}
 
 	slack.Say(response, ev.Channel)
+}
 
+func getIncrement(incrString string) int {
+	var incrementValue int
+	switch incrString {
+	case "+++":
+		incrementValue = 2
+	case "++":
+		incrementValue = 1
+	case "---":
+		incrementValue = -2
+	case "--":
+		incrementValue = -1
+	default:
+		incrementValue = 0
+	}
+
+	return incrementValue
 }

@@ -2,10 +2,11 @@ package events
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
-	"nltimv.com/karma-chameleon/slack/internal/messagehandler"
+	"nltimv.com/karma-chameleon/slack/internal/karma"
 	"nltimv.com/karma-chameleon/slack/internal/slack"
 )
 
@@ -50,6 +51,22 @@ func handleMessageEvent(evt *socketmode.Event, client *socketmode.Client) {
 	}
 
 	if !slack.IsSelf(ev.User) {
-		messagehandler.ProcessMessage(ev)
+		processMessage(ev)
+	}
+}
+
+func processMessage(ev *slackevents.MessageEvent) {
+	patterns := map[*regexp.Regexp]func(*slackevents.MessageEvent, *regexp.Regexp){
+		regexp.MustCompile(`<@([a-zA-Z0-9_]+)>\s?(\+\+\+|---|\+\+|--)`):                              karma.ProcessUserKarma,
+		regexp.MustCompile(`<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-.]*>\s?(\+\+\+|---|\+\+|--)`): karma.ProcessGroupKarma,
+		regexp.MustCompile(`<@([a-zA-Z0-9_]+)>\s?karma`):                                             karma.ProcessGetUserKarma,
+		regexp.MustCompile(`<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-.]*>\s?karma`):                karma.ProcessGetGroupKarma,
+	}
+
+	for pattern, processor := range patterns {
+		if pattern.MatchString(ev.Text) {
+			processor(ev, pattern)
+			return
+		}
 	}
 }
