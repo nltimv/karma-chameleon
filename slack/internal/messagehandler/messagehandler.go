@@ -45,12 +45,16 @@ func processUserKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 	var karma int
 	valid := slack.IsValidUser(userID)
 	if valid {
-		var err error
+		if userID != ev.User || incrementValue < 0 {
+			var err error
 
-		karma, err = db.UpdateUserKarma(userID, ev.UserTeam, incrementValue)
-		if err != nil {
-			fmt.Fprintf(os.Stdout, "Error while updating user karma: %v\n", err)
-			return
+			karma, err = db.UpdateUserKarma(userID, ev.UserTeam, incrementValue)
+			if err != nil {
+				fmt.Fprintf(os.Stdout, "Error while updating user karma: %v\n", err)
+				return
+			}
+		} else {
+			slack.Say("Nice try! You can't boost your own ego. 😜", ev.Channel)
 		}
 	} else {
 		fmt.Printf("Unknown user ID '%v'!\n", userID)
@@ -96,6 +100,8 @@ func processGroupKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 
 	if len(usergroupMembers) == 0 {
 		return
+	} else if len(usergroupMembers) == 1 && usergroupMembers[0] == ev.User {
+		slack.Say("Nice try! Creating a user group for youself so you can get group karma? You're smart, but not smart enough! 😜", ev.Channel)
 	}
 
 	var err error
