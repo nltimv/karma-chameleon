@@ -2,51 +2,54 @@ package events
 
 import (
 	"fmt"
-	"log"
-	"strings"
 
-	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
+	"nltimv.com/karma-chameleon/slack/internal/messagehandler"
+	"nltimv.com/karma-chameleon/slack/internal/slack"
 )
 
-func HandleEvents(sm *socketmode.Client, slackWebApi *slack.Client, selfUserId string) {
-	for ev := range sm.Events {
-		switch ev.Type {
-		case socketmode.EventTypeConnecting:
-			fmt.Println("Connecting to Slack with Socket Mode...")
-		case socketmode.EventTypeConnectionError:
-			fmt.Println("Connection failed. Retrying later...")
-		case socketmode.EventTypeConnected:
-			fmt.Println("Connected to Slack with Socket Mode.")
-		case socketmode.EventTypeEventsAPI:
-			sm.Ack(*ev.Request)
-			eventPayload, _ := ev.Data.(slackevents.EventsAPIEvent)
+func HandleEvents(handler *socketmode.SocketmodeHandler) {
+	handler.Handle(socketmode.EventTypeConnecting, handleConnecting)
+	handler.Handle(socketmode.EventTypeConnectionError, handleConnectionError)
+	handler.Handle(socketmode.EventTypeConnected, handleConnected)
+	handler.Handle(socketmode.EventTypeHello, handleHello)
 
-			switch eventPayload.Type {
-			case string(slackevents.Message):
-			case slackevents.CallbackEvent:
-				switch event := eventPayload.InnerEvent.Data.(type) {
-				case *slackevents.MessageEvent:
-					if event.User != selfUserId &&
-						strings.Contains(strings.ToLower(event.Text), "hello") {
-						_, _, err := slackWebApi.PostMessage(
-							event.Channel,
-							slack.MsgOptionText(
-								fmt.Sprintf(":wave: Hi there, <@%v>!", event.User),
-								false,
-							),
-						)
-						if err != nil {
-							log.Printf("Failed to reply: %v", err)
-						}
-					}
-				default:
-					sm.Debugf("Skipped: %v", event)
-				}
-			default:
-				sm.Debugf("unsupported Events API eventPayload received")
-			}
-		}
+	handler.HandleEvents(slackevents.Message, handleMessageEvent)
+}
+
+func handleConnecting(evt *socketmode.Event, client *socketmode.Client) {
+	fmt.Println("Connecting to Slack with Socket Mode...")
+}
+
+func handleConnectionError(evt *socketmode.Event, client *socketmode.Client) {
+	fmt.Println("Connection failed. Retrying later...")
+}
+
+func handleConnected(evt *socketmode.Event, client *socketmode.Client) {
+	fmt.Println("Connected to Slack with Socket Mode.")
+}
+
+func handleHello(evt *socketmode.Event, client *socketmode.Client) {
+	fmt.Println("Hello from Slack!")
+}
+
+func handleMessageEvent(evt *socketmode.Event, client *socketmode.Client) {
+	eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
+	if !ok {
+		fmt.Printf("Ignored %+v\n", evt)
+		return
+	}
+
+	client.Ack(*evt.Request)
+
+	ev, ok := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
+	if !ok {
+		fmt.Printf("Ignored %+v\n", ev)
+		return
+	}
+
+	if !slack.IsSelf(ev.User) {
+		messagehandler.ProcessMessage(ev)
 	}
 }
