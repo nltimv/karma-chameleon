@@ -1,6 +1,6 @@
 # Karma Chameleon
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/nltimv/karma-chameleon/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/nltimv/karma-chameleon/tree/main) [![license: MIT license](https://img.shields.io/badge/license-MIT%20license-blue.svg)](LICENSE) [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/nltimv/karma-chameleon/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/nltimv/karma-chameleon/tree/main) [![license: MIT license](https://img.shields.io/badge/license-MIT%20license-blue.svg)](LICENSE)
 
 <img src="assets/img/logo.jpg" width="200"/>
 
@@ -76,12 +76,12 @@ Replace `@group` with the handle of the user group you want to do karma operatio
 
 ## Development
 
-To start development of the bot, fork and check out the repo and install all dependencies. Make sure you have Python 3 installed on your computer.
+To start development of the bot, fork and check out the repo and install all dependencies. Make sure you have Python 3 and Go installed on your computer.
 
 ```
 $ git clone https://github.com/<username|org>/karma-chameleon.git
 $ cd karma-chameleon
-$ python -m pip install -r requirements.txt
+$ python -m pip install --upgrade pre-commit
 ```
 
 ### Pre-commit
