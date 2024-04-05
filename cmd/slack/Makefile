@@ -1,8 +1,8 @@
 NAME       := slack
 GO_FLAGS   ?=
 GO_TAGS	   ?=
-CGO_ENABLED?=0
-OUTPUT_BIN ?= bin/${NAME}
+CGO_ENABLED?= 0
+OUTPUT_BIN ?= ../../bin/${NAME}
 PACKAGE    := nltimv.com/karma-chameleon/$(NAME)
 GIT_REV    ?= $(shell git rev-parse --short HEAD)
 SOURCE_DATE_EPOCH ?= $(shell date +%s)
@@ -16,14 +16,6 @@ IMG_NAME   := ghcr.io/nltimv/karma-chameleon/${NAME}
 IMAGE      := ${IMG_NAME}:${VERSION}
 
 default: help
-
-test:  ## Run all tests
-	@go clean --testcache && go run gotest.tools/gotestsum@latest --junitfile results.xml
-
-cover:  ## Run test coverage suite
-	@mkdir -p cover_results
-	@go test ./... --coverprofile=cover_results/cov.out
-	@go tool cover --html=cover_results/cov.out -o cover_results/cov.html
 
 build:  ## Builds the application
 	@CGO_ENABLED=${CGO_ENABLED} go build ${GO_FLAGS} \

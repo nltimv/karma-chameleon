@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"log"
@@ -7,12 +7,12 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"nltimv.com/karma-chameleon/slack/internal/db"
-	"nltimv.com/karma-chameleon/slack/internal/events"
-	"nltimv.com/karma-chameleon/slack/internal/slack"
+	"nltimv.com/karma-chameleon/internal/db"
+	"nltimv.com/karma-chameleon/internal/events"
+	"nltimv.com/karma-chameleon/internal/slack"
 )
 
-func Start() {
+func main() {
 	botToken := os.Getenv("SLACK_BOT_TOKEN")
 	if botToken == "" {
 		log.Fatal("Slack bot token not provided")

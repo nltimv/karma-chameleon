@@ -41,14 +41,12 @@ jobs:
           name: Pre-commit - Analyze code
           command: |
             python -m pre_commit run -v --all-files
-  build-test-slack:
+  build-test:
     executor: go-builder
-    working_directory: ~/project/slack
     steps:
-      - checkout:
-          path: "~/project"
+      - checkout
       - run:
-          name: Build slack using Go
+          name: Build all apps using Go
           command: make build
       - run:
           name: Run tests using Go
@@ -69,7 +67,7 @@ jobs:
       - run:
           name: Build application Docker image
           command: |
-            docker build -t build:latest .
+            docker build -t build:latest . -f cmd/slack/Dockerfile
       - run:
           name: Publish Docker Image to GitHub Container Registry
           command: |
@@ -88,7 +86,7 @@ jobs:
       - run:
           name: Build application Docker image
           command: |
-            docker build -t build:latest .
+            docker build -t build:latest . -f cmd/slack/Dockerfile
       - run:
           name: Publish Docker Image to GitHub Container Registry
           command: |
@@ -151,7 +149,7 @@ workflows:
               ignore: main
             tags:
               ignore: /.*/
-      - build-test-slack:
+      - build-test:
           filters:
             branches:
               ignore: main
@@ -165,7 +163,7 @@ workflows:
               only: main
             tags:
               ignore: /.*/
-      - build-test-slack:
+      - build-test:
           filters:
             branches:
               only: main
@@ -174,7 +172,7 @@ workflows:
       - build-slack-docker-main:
           requires:
             - lint
-            - build-test-slack
+            - build-test
           filters:
             branches:
               only: main
@@ -196,7 +194,7 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v\d+\.\d+$/
-      - build-test-slack:
+      - build-test:
           filters:
             branches:
               ignore: /.*/
@@ -205,7 +203,7 @@ workflows:
       - build-slack-docker-release:
           requires:
             - lint
-            - build-test-slack
+            - build-test
           filters:
             branches:
               ignore: /.*/

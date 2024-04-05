@@ -6,8 +6,8 @@ import (
 
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
-	"nltimv.com/karma-chameleon/slack/internal/karma"
-	"nltimv.com/karma-chameleon/slack/internal/slack"
+	"nltimv.com/karma-chameleon/internal/karma"
+	"nltimv.com/karma-chameleon/internal/slack"
 )
 
 func HandleEvents(handler *socketmode.SocketmodeHandler) {

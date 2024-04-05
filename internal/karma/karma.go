@@ -6,8 +6,8 @@ import (
 	"regexp"
 
 	"github.com/slack-go/slack/slackevents"
-	"nltimv.com/karma-chameleon/slack/internal/db"
-	"nltimv.com/karma-chameleon/slack/internal/slack"
+	"nltimv.com/karma-chameleon/internal/db"
+	"nltimv.com/karma-chameleon/internal/slack"
 )
 
 func ProcessGetUserKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
