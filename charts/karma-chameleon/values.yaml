@@ -19,6 +19,7 @@ karmaChameleon:
     host: ""
     port: 5432
     databaseName: ""
+    sslMode: "require"
     username: ""
     password: ""
     existingSecretName: ""

@@ -8,9 +8,9 @@ import (
 
 var db *sql.DB
 
-func Open(dbHost string, dbPort string, dbUser string, dbPassword string, dbName string) error {
-	dbInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		dbHost, dbPort, dbUser, dbPassword, dbName)
+func Open(dbHost string, dbPort string, dbUser string, dbPassword string, dbName string, sslmode string) error {
+	dbInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		dbHost, dbPort, dbUser, dbPassword, dbName, sslmode)
 
 	var err error
 	db, err = sql.Open("postgres", dbInfo)

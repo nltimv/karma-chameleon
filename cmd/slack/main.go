@@ -28,8 +28,9 @@ func main() {
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
+	dbSslMode := os.Getenv("DB_SSLMODE")
 
-	db.Open(dbHost, dbPort, dbUser, dbPassword, dbName)
+	db.Open(dbHost, dbPort, dbUser, dbPassword, dbName, dbSslMode)
 	defer db.Close()
 
 	db.CreateTables()

@@ -40,6 +40,8 @@ spec:
               value: {{ .Values.karmaChameleon.db.port | quote }}
             - name: DB_NAME
               value: {{ .Values.karmaChameleon.db.databaseName | quote }}
+            - name: DB_SSLMODE
+              value: {{ .Values.karmaChameleon.db.sslMode | quote }}
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
