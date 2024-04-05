@@ -51,12 +51,12 @@ func handleMessageEvent(evt *socketmode.Event, client *socketmode.Client) {
 	}
 
 	if !slack.IsSelf(ev.User) {
-		processMessage(ev)
+		processMessage(ev, &eventsAPIEvent)
 	}
 }
 
-func processMessage(ev *slackevents.MessageEvent) {
-	patterns := map[*regexp.Regexp]func(*slackevents.MessageEvent, *regexp.Regexp){
+func processMessage(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent) {
+	patterns := map[*regexp.Regexp]func(*slackevents.MessageEvent, *slackevents.EventsAPIEvent, *regexp.Regexp){
 		regexp.MustCompile(`<@([a-zA-Z0-9_]+)>\s?(\+\+\+|---|\+\+|--)`):                              karma.ProcessUserKarma,
 		regexp.MustCompile(`<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-.]*>\s?(\+\+\+|---|\+\+|--)`): karma.ProcessGroupKarma,
 		regexp.MustCompile(`<@([a-zA-Z0-9_]+)>\s?karma`):                                             karma.ProcessGetUserKarma,
@@ -65,7 +65,7 @@ func processMessage(ev *slackevents.MessageEvent) {
 
 	for pattern, processor := range patterns {
 		if pattern.MatchString(ev.Text) {
-			processor(ev, pattern)
+			processor(ev, apiEvent, pattern)
 			return
 		}
 	}

@@ -10,27 +10,27 @@ import (
 	"nltimv.com/karma-chameleon/internal/slack"
 )
 
-func ProcessGetUserKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
+func ProcessGetUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent, re *regexp.Regexp) {
 	matches := re.FindStringSubmatch(ev.Text)
 	userID := matches[1]
 
-	karma := db.GetUserKarma(userID, ev.UserTeam)
+	karma := db.GetUserKarma(userID, apiEvent.TeamID)
 
 	response := fmt.Sprintf("<@%s>'s current karma: %d", userID, karma)
 	slack.Say(response, ev.Channel)
 }
 
-func ProcessGetGroupKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
+func ProcessGetGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent, re *regexp.Regexp) {
 	matches := re.FindStringSubmatch(ev.Text)
 	groupID := matches[1]
 
-	karma := db.GetGroupKarma(groupID, ev.UserTeam)
+	karma := db.GetGroupKarma(groupID, apiEvent.TeamID)
 
 	response := fmt.Sprintf("Current karma for group <!subteam^%s>: %d", groupID, karma)
 	slack.Say(response, ev.Channel)
 }
 
-func ProcessUserKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
+func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent, re *regexp.Regexp) {
 	matches := re.FindStringSubmatch(ev.Text)
 	userID := matches[1]
 	increment := matches[2]
@@ -47,7 +47,7 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 		if userID != ev.User || incrementValue < 0 {
 			var err error
 
-			karma, err = db.UpdateUserKarma(userID, ev.UserTeam, incrementValue)
+			karma, err = db.UpdateUserKarma(userID, apiEvent.TeamID, incrementValue)
 			if err != nil {
 				fmt.Fprintf(os.Stdout, "Error while updating user karma: %v\n", err)
 				return
@@ -76,7 +76,7 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 	slack.Say(response, ev.Channel)
 }
 
-func ProcessGroupKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
+func ProcessGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent, re *regexp.Regexp) {
 	matches := re.FindStringSubmatch(ev.Text)
 	groupID := matches[1]
 	increment := matches[2]
@@ -100,7 +100,7 @@ func ProcessGroupKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 
 	for _, memberID := range usergroupMembers {
 		if memberID != ev.User || incrementValue < 0 {
-			_, err = db.UpdateUserKarma(memberID, ev.UserTeam, incrementValue)
+			_, err = db.UpdateUserKarma(memberID, apiEvent.TeamID, incrementValue)
 			if err != nil {
 				fmt.Fprintf(os.Stdout, "Error while updating user karma: %v", err)
 				return
@@ -108,7 +108,7 @@ func ProcessGroupKarma(ev *slackevents.MessageEvent, re *regexp.Regexp) {
 		}
 	}
 
-	karma := db.UpdateGroupKarma(groupID, ev.UserTeam, incrementValue)
+	karma := db.UpdateGroupKarma(groupID, apiEvent.TeamID, incrementValue)
 
 	var response string
 	switch incrementValue {
