@@ -9,7 +9,7 @@ import (
 var db *sql.DB
 
 func Open(dbHost string, dbPort string, dbUser string, dbPassword string, dbName string) error {
-	dbInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+	dbInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=require",
 		dbHost, dbPort, dbUser, dbPassword, dbName)
 
 	var err error
