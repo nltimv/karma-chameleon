@@ -1,10 +1,10 @@
 version: '3'
 
 services:
-  karmabot:
+  slack:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ./cmd/slack/Dockerfile
     env_file:
       - .env.default
       - .env.overrides
