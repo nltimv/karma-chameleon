@@ -61,17 +61,7 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Events
 		return
 	}
 
-	var response string
-	switch incrementValue {
-	case 2:
-		response = fmt.Sprintf("<@%s>'s karma got a double boost! 🚀 They now have %d karma.", userID, karma)
-	case 1:
-		response = fmt.Sprintf("<@%s>'s karma is on the rise! 🚀 They now have %d karma.", userID, karma)
-	case -1:
-		response = fmt.Sprintf("<@%s>'s karma took a hit! 💔 They now have %d karma.", userID, karma)
-	case -2:
-		response = fmt.Sprintf("<@%s>'s karma took a double hit! 💔 They now have %d karma.", userID, karma)
-	}
+	response := getUserKarmaMessage(userID, karma, incrementValue)
 
 	slack.Say(response, ev.Channel)
 }
@@ -110,17 +100,7 @@ func ProcessGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Event
 
 	karma := db.UpdateGroupKarma(groupID, apiEvent.TeamID, incrementValue)
 
-	var response string
-	switch incrementValue {
-	case 2:
-		response = fmt.Sprintf("The karma of <!subteam^%s> and its members got a double boost! 🚀 They now have %d karma.", groupID, karma)
-	case 1:
-		response = fmt.Sprintf("The karma of <!subteam^%s> and its members is on the rise! 🚀 They now have %d karma.", groupID, karma)
-	case -1:
-		response = fmt.Sprintf("The karma of <!subteam^%s> and its members took a hit! 💔 They now have %d karma.", groupID, karma)
-	case -2:
-		response = fmt.Sprintf("The karma of <!subteam^%s> and its members took a double hit! 💔 They now have %d karma.", groupID, karma)
-	}
+	response := getGroupKarmaMessage(groupID, karma, incrementValue)
 
 	slack.Say(response, ev.Channel)
 }
