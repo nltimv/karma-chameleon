@@ -15,6 +15,7 @@ func HandleEvents(handler *socketmode.SocketmodeHandler) {
 	handler.Handle(socketmode.EventTypeConnectionError, handleConnectionError)
 	handler.Handle(socketmode.EventTypeConnected, handleConnected)
 	handler.Handle(socketmode.EventTypeHello, handleHello)
+	handler.Handle(socketmode.EventTypeIncomingError, handleIncomingError)
 
 	handler.HandleEvents(slackevents.Message, handleMessageEvent)
 }
@@ -33,6 +34,10 @@ func handleConnected(evt *socketmode.Event, client *socketmode.Client) {
 
 func handleHello(evt *socketmode.Event, client *socketmode.Client) {
 	fmt.Println("Hello from Slack!")
+}
+
+func handleIncomingError(evt *socketmode.Event, client *socketmode.Client) {
+	fmt.Println("Incoming error from Slack.")
 }
 
 func handleMessageEvent(evt *socketmode.Event, client *socketmode.Client) {
