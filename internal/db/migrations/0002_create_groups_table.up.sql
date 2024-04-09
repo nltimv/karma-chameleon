@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS groups (
+		id SERIAL PRIMARY KEY,
+		group_id VARCHAR(255) NOT NULL,
+		team_id VARCHAR(255) NOT NULL,
+		karma INT NOT NULL
+	);

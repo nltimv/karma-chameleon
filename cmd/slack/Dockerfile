@@ -1,8 +1,7 @@
 FROM golang:alpine AS build
 
 WORKDIR /src/
-COPY ./cmd/slack /src/cmd/slack
-COPY ./internal /src/internal
+COPY ./ /src/
 COPY go.mod go.sum .git /src/
 WORKDIR /src/cmd/slack
 RUN apk add make git
