@@ -26,7 +26,7 @@ func CreateTables() {
 }
 
 func handleError(err error) {
-	if err != nil {
+	if err != nil && err != migrate.ErrNoChange {
 		log.Fatal(err)
 	}
 }
