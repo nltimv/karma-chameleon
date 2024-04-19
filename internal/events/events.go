@@ -4,10 +4,17 @@ import (
 	"fmt"
 	"regexp"
 
+	slackapi "github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 	"nltimv.com/karma-chameleon/internal/karma"
 	"nltimv.com/karma-chameleon/internal/slack"
+	"nltimv.com/karma-chameleon/internal/ui"
+)
+
+const (
+	interactionActionLeaderboardUsers = "actionLeaderboardUsers"
+	interactionActionHelp             = "actionHelp"
 )
 
 func HandleEvents(handler *socketmode.SocketmodeHandler) {
@@ -18,6 +25,9 @@ func HandleEvents(handler *socketmode.SocketmodeHandler) {
 	handler.Handle(socketmode.EventTypeIncomingError, handleIncomingError)
 
 	handler.HandleEvents(slackevents.Message, handleMessageEvent)
+	handler.HandleEvents(slackevents.AppHomeOpened, handleAppHomeOpened)
+
+	handler.HandleInteraction(slackapi.InteractionTypeBlockActions, handleInteraction)
 }
 
 func handleConnecting(evt *socketmode.Event, client *socketmode.Client) {
@@ -57,6 +67,40 @@ func handleMessageEvent(evt *socketmode.Event, client *socketmode.Client) {
 
 	if !slack.IsSelf(ev.User) {
 		processMessage(ev, &eventsAPIEvent)
+	}
+}
+
+func handleAppHomeOpened(evt *socketmode.Event, client *socketmode.Client) {
+	eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
+	if !ok {
+		fmt.Printf("Ignored %+v\n", evt)
+		return
+	}
+	client.Ack(*evt.Request)
+
+	ev, ok := eventsAPIEvent.InnerEvent.Data.(*slackevents.AppHomeOpenedEvent)
+
+	if !ok {
+		fmt.Printf("Ignored %+v\n", ev)
+		return
+	}
+
+	if !slack.IsSelf(ev.User) {
+		ui.ShowHomeTab(ev)
+	}
+}
+
+func handleInteraction(evt *socketmode.Event, client *socketmode.Client) {
+	interaction := evt.Data.(slackapi.InteractionCallback)
+	client.Ack(*evt.Request)
+
+	actionId := interaction.ActionCallback.BlockActions[0].ActionID
+
+	switch actionId {
+	case interactionActionLeaderboardUsers:
+		// TODO: Implement leaderboard
+	default:
+		fmt.Printf("Unknown action ID: %s\n", actionId)
 	}
 }
 

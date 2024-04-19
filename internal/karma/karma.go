@@ -17,7 +17,8 @@ func ProcessGetUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Eve
 	karma := db.GetUserKarma(userID, apiEvent.TeamID)
 
 	response := fmt.Sprintf("<@%s> currently has %d karma.", userID, karma)
-	slack.Say(response, ev.Channel)
+	ctx := getMessageContext(ev, apiEvent)
+	slack.Say(response, ctx, nil)
 }
 
 func ProcessGetGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent, re *regexp.Regexp) {
@@ -27,10 +28,12 @@ func ProcessGetGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Ev
 	karma := db.GetGroupKarma(groupID, apiEvent.TeamID)
 
 	response := fmt.Sprintf("<!subteam^%s> currently has %d karma.", groupID, karma)
-	slack.Say(response, ev.Channel)
+	ctx := getMessageContext(ev, apiEvent)
+	slack.Say(response, ctx, nil)
 }
 
 func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent, re *regexp.Regexp) {
+	ctx := getMessageContext(ev, apiEvent)
 	matches := re.FindStringSubmatch(ev.Text)
 	userID := matches[1]
 	increment := matches[2]
@@ -53,7 +56,7 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Events
 				return
 			}
 		} else {
-			slack.Say("Nice try! You can't boost your own ego. 😜", ev.Channel)
+			slack.Say("Nice try! You can't boost your own ego. 😜", ctx, nil)
 			return
 		}
 	} else {
@@ -73,10 +76,13 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Events
 		response = fmt.Sprintf("<@%s>'s karma took a double hit! 💔 They now have %d karma.", userID, karma)
 	}
 
-	slack.Say(response, ev.Channel)
+	extraFields := getExtraFields(ev.User, karma)
+
+	slack.Say(response, ctx, extraFields)
 }
 
 func ProcessGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent, re *regexp.Regexp) {
+	ctx := getMessageContext(ev, apiEvent)
 	matches := re.FindStringSubmatch(ev.Text)
 	groupID := matches[1]
 	increment := matches[2]
@@ -92,7 +98,7 @@ func ProcessGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Event
 	if len(usergroupMembers) == 0 {
 		return
 	} else if len(usergroupMembers) == 1 && usergroupMembers[0] == ev.User {
-		slack.Say("Nice try! Creating a user group for youself so you can get group karma? You're smart, but not smart enough! 😜", ev.Channel)
+		slack.Say("Nice try! Creating a user group for youself so you can get group karma? You're smart, but not smart enough! 😜", ctx, nil)
 		return
 	}
 
@@ -122,7 +128,9 @@ func ProcessGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Event
 		response = fmt.Sprintf("The karma of <!subteam^%s> and its members took a double hit! 💔 They now have %d karma.", groupID, karma)
 	}
 
-	slack.Say(response, ev.Channel)
+	extraFields := getExtraFields(ev.User, karma)
+
+	slack.Say(response, ctx, extraFields)
 }
 
 func getIncrement(incrString string) int {
@@ -141,4 +149,25 @@ func getIncrement(incrString string) int {
 	}
 
 	return incrementValue
+}
+
+func getMessageContext(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent) *slack.MessageContext {
+	return &slack.MessageContext{
+		ChannelId: ev.Channel,
+		TeamId:    apiEvent.TeamID,
+		AppId:     apiEvent.APIAppID,
+	}
+}
+
+func getExtraFields(givenBy string, newKarma int) []*slack.ExtraFields {
+	return []*slack.ExtraFields{
+		{
+			Label: "Given by",
+			Value: fmt.Sprintf("<@%s>", givenBy),
+		},
+		{
+			Label: "New karma",
+			Value: fmt.Sprintf("%d", newKarma),
+		},
+	}
 }

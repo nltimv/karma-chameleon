@@ -1,18 +1,8 @@
 package slack
 
 import (
-	"fmt"
 	"log"
-
-	"github.com/slack-go/slack"
 )
-
-func Say(message string, channel string) {
-	_, _, err := webApi.PostMessage(channel, slack.MsgOptionText(message, false))
-	if err != nil {
-		fmt.Printf("failed posting message: %v", err)
-	}
-}
 
 func IsValidUser(userID string) bool {
 	userInfo, err := webApi.GetUserInfo(userID)

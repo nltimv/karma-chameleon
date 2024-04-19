@@ -57,3 +57,7 @@ func AddEventHandler(eventHandler func(*socketmode.SocketmodeHandler)) {
 func IsSelf(userId string) bool {
 	return userId == selfUserId
 }
+
+func GetAppUrl(teamId string, appId string, tab string) string {
+	return fmt.Sprintf("slack://app?team=%s&id=%s&tab=%s", teamId, appId, tab)
+}
