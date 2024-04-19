@@ -1,6 +1,9 @@
 package ui
 
 import (
+	"fmt"
+	"os"
+
 	slackapi "github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"nltimv.com/karma-chameleon/internal/slack"
@@ -13,14 +16,6 @@ func ShowHomeTab(ev *slackevents.AppHomeOpenedEvent) {
 	blocks = append(blocks, slackapi.NewHeaderBlock(
 		slackapi.NewTextBlockObject("plain_text", "Welcome to the Karma Chameleon Home Page!", true, false),
 	))
-
-	timestamp := ev.EventTimeStamp
-
-	blocks = append(blocks, slackapi.NewContextBlock(
-		"blockTimestamp",
-		slackapi.NewTextBlockObject("plain_text", "Last updated: "+timestamp, true, false),
-	),
-	)
 
 	blocks = append(blocks, slackapi.NewActionBlock(
 		"blockActionButtons",
@@ -93,25 +88,27 @@ func ShowHomeTab(ev *slackevents.AppHomeOpenedEvent) {
 		nil, nil,
 	))
 
+	versionNumber := os.Getenv("APP_VERSION")
+
 	blocks = append(blocks, slackapi.NewContextBlock(
 		"blockVersion",
 		slackapi.NewImageBlockElement(
 			"https://raw.githubusercontent.com/nltimv/karma-chameleon/main/assets/img/logo.jpg",
 			"cute cat",
 		),
-		slackapi.NewTextBlockObject("plain_text", "Karma Chameleon - Version 2.0.104", true, false),
+		slackapi.NewTextBlockObject("plain_text", fmt.Sprintf("Karma Chameleon - Version %s", versionNumber), true, false),
 	))
 
 	blocks = append(blocks, slackapi.NewActionBlock(
 		"blockLinkButtons",
 		slackapi.NewButtonBlockElement(
-			"actionGitHub",
-			"valueGitHub",
+			"actionLinkGitHub",
+			"valueLinkGitHub",
 			slackapi.NewTextBlockObject("plain_text", ":globe_with_meridians: GitHub", true, false),
 		).WithURL("https://github.com/nltimv/karma-chameleon"),
 		slackapi.NewButtonBlockElement(
-			"actionLicense",
-			"valueLicense",
+			"actionLinkLicense",
+			"valueLinkLicense",
 			slackapi.NewTextBlockObject("plain_text", ":page_with_curl: License", true, false),
 		).WithURL("https://github.com/nltimv/karma-chameleon/blob/main/LICENSE"),
 	))

@@ -76,9 +76,7 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Events
 		response = fmt.Sprintf("<@%s>'s karma took a double hit! 💔 They now have %d karma.", userID, karma)
 	}
 
-	extraFields := getExtraFields(ev.User, karma)
-
-	slack.Say(response, ctx, extraFields)
+	slack.Say(response, ctx, nil)
 }
 
 func ProcessGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent, re *regexp.Regexp) {
@@ -128,9 +126,7 @@ func ProcessGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Event
 		response = fmt.Sprintf("The karma of <!subteam^%s> and its members took a double hit! 💔 They now have %d karma.", groupID, karma)
 	}
 
-	extraFields := getExtraFields(ev.User, karma)
-
-	slack.Say(response, ctx, extraFields)
+	slack.Say(response, ctx, nil)
 }
 
 func getIncrement(incrString string) int {
@@ -156,18 +152,5 @@ func getMessageContext(ev *slackevents.MessageEvent, apiEvent *slackevents.Event
 		ChannelId: ev.Channel,
 		TeamId:    apiEvent.TeamID,
 		AppId:     apiEvent.APIAppID,
-	}
-}
-
-func getExtraFields(givenBy string, newKarma int) []*slack.ExtraFields {
-	return []*slack.ExtraFields{
-		{
-			Label: "Given by",
-			Value: fmt.Sprintf("<@%s>", givenBy),
-		},
-		{
-			Label: "New karma",
-			Value: fmt.Sprintf("%d", newKarma),
-		},
 	}
 }

@@ -44,6 +44,6 @@ func Say(message string, ctx *MessageContext, extraFields []*ExtraFields) {
 
 func getStandardButtons(ctx *MessageContext) *slack.ActionBlock {
 	leaderboardButton := slack.NewButtonBlockElement("actionLeaderboardUsers", "valueLeaderboard", slack.NewTextBlockObject("plain_text", ":medal: Leaderboard", true, false))
-	helpButton := slack.NewButtonBlockElement("actionHelp", "valueHelp", slack.NewTextBlockObject("plain_text", ":question: Help / About", true, false)).WithURL(GetAppUrl(ctx.TeamId, ctx.AppId, "home"))
+	helpButton := slack.NewButtonBlockElement("actionLinkHelp", "valueLinkHelp", slack.NewTextBlockObject("plain_text", ":question: Help / About", true, false)).WithURL(GetAppUrl(ctx.TeamId, ctx.AppId, "home"))
 	return slack.NewActionBlock("msgShortcuts", leaderboardButton, helpButton)
 }

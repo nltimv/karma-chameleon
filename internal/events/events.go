@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	slackapi "github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -14,7 +15,6 @@ import (
 
 const (
 	interactionActionLeaderboardUsers = "actionLeaderboardUsers"
-	interactionActionHelp             = "actionHelp"
 )
 
 func HandleEvents(handler *socketmode.SocketmodeHandler) {
@@ -95,6 +95,10 @@ func handleInteraction(evt *socketmode.Event, client *socketmode.Client) {
 	client.Ack(*evt.Request)
 
 	actionId := interaction.ActionCallback.BlockActions[0].ActionID
+
+	if strings.HasPrefix(actionId, "actionLink") {
+		return // no-op because the action is a link
+	}
 
 	switch actionId {
 	case interactionActionLeaderboardUsers:

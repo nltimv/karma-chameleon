@@ -13,7 +13,7 @@ import (
 //go:embed migrations/*.sql
 var fs embed.FS
 
-func CreateTables() {
+func MigrateDb() {
 	fmt.Println("Migrating database...")
 	io, err := iofs.New(fs, "migrations")
 	handleError(err)
