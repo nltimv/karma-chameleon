@@ -14,9 +14,12 @@ func ProcessGetUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Eve
 	matches := re.FindStringSubmatch(ev.Text)
 	userID := matches[1]
 
-	karma := db.GetUserKarma(userID, apiEvent.TeamID)
+	user, err := db.GetUserKarma(userID, apiEvent.TeamID)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error while querying user karma: %v", err)
+	}
 
-	response := fmt.Sprintf("<@%s> currently has %d karma.", userID, karma)
+	response := fmt.Sprintf("<@%s> currently has %d karma.", userID, user.Karma)
 	slack.Say(response, ev.Channel)
 }
 
@@ -24,9 +27,12 @@ func ProcessGetGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Ev
 	matches := re.FindStringSubmatch(ev.Text)
 	groupID := matches[1]
 
-	karma := db.GetGroupKarma(groupID, apiEvent.TeamID)
+	group, err := db.GetGroupKarma(groupID, apiEvent.TeamID)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error while querying group karma: %v", err)
+	}
 
-	response := fmt.Sprintf("<!subteam^%s> currently has %d karma.", groupID, karma)
+	response := fmt.Sprintf("<!subteam^%s> currently has %d karma.", groupID, group.Karma)
 	slack.Say(response, ev.Channel)
 }
 
@@ -41,13 +47,13 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Events
 		return
 	}
 
-	var karma int
+	var user *db.User
 	valid := slack.IsValidUser(userID)
 	if valid {
 		if userID != ev.User || incrementValue < 0 {
 			var err error
 
-			karma, err = db.UpdateUserKarma(userID, apiEvent.TeamID, incrementValue)
+			user, err = db.UpdateUserKarma(userID, apiEvent.TeamID, incrementValue)
 			if err != nil {
 				fmt.Fprintf(os.Stdout, "Error while updating user karma: %v\n", err)
 				return
@@ -61,7 +67,7 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Events
 		return
 	}
 
-	response := getUserKarmaMessage(userID, karma, incrementValue)
+	response := getUserKarmaMessage(userID, user.Karma, incrementValue)
 
 	slack.Say(response, ev.Channel)
 }
@@ -92,15 +98,19 @@ func ProcessGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Event
 		if memberID != ev.User || incrementValue < 0 {
 			_, err = db.UpdateUserKarma(memberID, apiEvent.TeamID, incrementValue)
 			if err != nil {
-				fmt.Fprintf(os.Stdout, "Error while updating user karma: %v", err)
+				fmt.Fprintf(os.Stderr, "Error while updating user karma: %v", err)
 				return
 			}
 		}
 	}
 
-	karma := db.UpdateGroupKarma(groupID, apiEvent.TeamID, incrementValue)
+	var group *db.Group
 
-	response := getGroupKarmaMessage(groupID, karma, incrementValue)
+	if group, err = db.UpdateGroupKarma(groupID, apiEvent.TeamID, incrementValue); err != nil {
+		fmt.Fprintf(os.Stderr, "Error while updating group karma: %v", err)
+	}
+
+	response := getGroupKarmaMessage(groupID, group.Karma, incrementValue)
 
 	slack.Say(response, ev.Channel)
 }

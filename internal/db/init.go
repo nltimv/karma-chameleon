@@ -1,32 +1,15 @@
 package db
 
 import (
-	"embed"
-	"fmt"
 	"log"
 
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"nltimv.com/karma-chameleon/internal/db/migrate"
 )
 
-//go:embed migrations/*.sql
-var fs embed.FS
-
-func CreateTables() {
-	fmt.Println("Migrating database...")
-	io, err := iofs.New(fs, "migrations")
-	handleError(err)
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	handleError(err)
-	m, err := migrate.NewWithInstance("iofs", io, "postgres", driver)
-	handleError(err)
-	err = m.Up()
-	handleError(err)
-}
-
-func handleError(err error) {
-	if err != nil && err != migrate.ErrNoChange {
-		log.Fatal(err)
+func Migrate() {
+	if db == nil {
+		log.Fatal("Database has not been initialized yet!")
 	}
+
+	migrate.Migrate(db)
 }

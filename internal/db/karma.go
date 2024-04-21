@@ -1,90 +1,75 @@
 package db
 
 import (
-	"database/sql"
-	"log"
+	"errors"
+
+	"gorm.io/gorm"
 )
 
-func UpdateUserKarma(userID string, teamID string, increment int) (int, error) {
-
-	var karma int
+func UpdateUserKarma(userID string, teamID string, increment int) (*User, error) {
+	var user *User
 	var err error
-	row := db.QueryRow("SELECT karma FROM users WHERE user_id = $1 AND team_id = $2", userID, teamID)
-	if err = row.Scan(&karma); err != nil {
-		if err == sql.ErrNoRows {
-			karma = increment
-			_, err := db.Exec("INSERT INTO users (user_id, team_id, karma) VALUES ($1, $2, $3)", userID, teamID, increment)
-			if err != nil {
-				log.Println("Error inserting user karma: ", err)
-				return 0, err
+	if user, err = GetUserKarma(userID, teamID); err != nil {
+		return user, err
+	}
+
+	user.Karma += increment
+
+	if err = db.Save(&user).Error; err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func GetUserKarma(userID string, teamID string) (*User, error) {
+	var err error
+	var user User
+	if err = db.Where("user_id = ? AND team_id = ?", userID, teamID).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			user = User{
+				UserId: userID,
+				TeamId: teamID,
+				Karma:  0,
 			}
 		} else {
-			log.Println("Error scanning user karma: ", err)
-			return 0, err
-		}
-	} else {
-		karma += increment
-		_, err := db.Exec("UPDATE users SET karma = $1 WHERE user_id = $2 AND team_id = $3", karma, userID, teamID)
-		if err != nil {
-			log.Println("Error updating user karma: ", err)
-			return 0, err
+			return &user, err
 		}
 	}
 
-	return karma, nil
+	return &user, nil
 }
 
-func GetUserKarma(groupID, teamID string) int {
-	var karma int
-	row := db.QueryRow("SELECT karma FROM users WHERE user_id = $1 AND team_id = $2", groupID, teamID)
-	if err := row.Scan(&karma); err != nil {
-		if err == sql.ErrNoRows {
-			return 0
-		}
-		log.Println("Error scanning user karma: ", err)
-		return 0
+func UpdateGroupKarma(groupID string, teamID string, increment int) (*Group, error) {
+	var group *Group
+	var err error
+	if group, err = GetGroupKarma(groupID, teamID); err != nil {
+		return group, err
 	}
 
-	return karma
+	group.Karma += increment
+
+	if err = db.Save(&group).Error; err != nil {
+		return group, err
+	}
+
+	return group, nil
 }
 
-func UpdateGroupKarma(groupID, teamID string, increment int) int {
-	var karma int
-	row := db.QueryRow("SELECT karma FROM groups WHERE group_id = $1 AND team_id = $2", groupID, teamID)
-	if err := row.Scan(&karma); err != nil {
-		if err == sql.ErrNoRows {
-			karma = increment
-			_, err := db.Exec("INSERT INTO groups (group_id, team_id, karma) VALUES ($1, $2, $3)", groupID, teamID, increment)
-			if err != nil {
-				log.Println("Error inserting group karma: ", err)
-				return 0
+func GetGroupKarma(groupID string, teamID string) (*Group, error) {
+	var err error
+	var group Group
+	if err = db.Where("user_id = ? AND team_id = ?", groupID, teamID).First(&group).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			group = Group{
+				GroupId: groupID,
+				TeamId:  teamID,
+				Karma:   0,
 			}
 		} else {
-			log.Println("Error scanning group karma: ", err)
-			return 0
-		}
-	} else {
-		karma += increment
-		_, err := db.Exec("UPDATE groups SET karma = $1 WHERE group_id = $2 AND team_id = $3", karma, groupID, teamID)
-		if err != nil {
-			log.Println("Error updating group karma: ", err)
-			return 0
+			return &group, err
 		}
 	}
 
-	return karma
-}
-
-func GetGroupKarma(groupID, teamID string) int {
-	var karma int
-	row := db.QueryRow("SELECT karma FROM groups WHERE group_id = $1 AND team_id = $2", groupID, teamID)
-	if err := row.Scan(&karma); err != nil {
-		if err == sql.ErrNoRows {
-			return 0
-		}
-		log.Println("Error scanning group karma: ", err)
-		return 0
-	}
-
-	return karma
+	return &group, nil
 }
