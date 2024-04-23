@@ -18,11 +18,16 @@ func Migrate(db *gorm.DB) {
 					TeamId string
 					Karma  int
 				}
-
-				return d.Migrator().CreateTable(&User{})
+				if !d.Migrator().HasTable(&User{}) {
+					return d.Migrator().CreateTable(&User{})
+				}
+				return nil
 			},
 			Rollback: func(d *gorm.DB) error {
-				return d.Migrator().DropTable("users")
+				if d.Migrator().HasTable("users") {
+					return d.Migrator().DropTable("users")
+				}
+				return nil
 			},
 		},
 		{
@@ -34,11 +39,16 @@ func Migrate(db *gorm.DB) {
 					TeamId  string
 					Karma   int
 				}
-
-				return d.Migrator().CreateTable(&Group{})
+				if !d.Migrator().HasTable(&Group{}) {
+					return d.Migrator().CreateTable(&Group{})
+				}
+				return nil
 			},
 			Rollback: func(d *gorm.DB) error {
-				return d.Migrator().DropTable("groups")
+				if d.Migrator().HasTable("groups") {
+					return d.Migrator().DropTable("groups")
+				}
+				return nil
 			},
 		},
 	})
