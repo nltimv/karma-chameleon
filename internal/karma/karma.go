@@ -2,7 +2,7 @@ package karma
 
 import (
 	"fmt"
-	"os"
+	"log"
 	"regexp"
 
 	"github.com/slack-go/slack/slackevents"
@@ -16,7 +16,7 @@ func ProcessGetUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Eve
 
 	user, err := db.GetUserKarma(userID, apiEvent.TeamID)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error while querying user karma: %v", err)
+		log.Printf("Error while querying user karma: %v\n", err)
 	}
 
 	response := fmt.Sprintf("<@%s> currently has %d karma.", userID, user.Karma)
@@ -29,7 +29,7 @@ func ProcessGetGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Ev
 
 	group, err := db.GetGroupKarma(groupID, apiEvent.TeamID)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error while querying group karma: %v", err)
+		log.Printf("Error while querying group karma: %v\n", err)
 	}
 
 	response := fmt.Sprintf("<!subteam^%s> currently has %d karma.", groupID, group.Karma)
@@ -55,7 +55,7 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Events
 
 			user, err = db.UpdateUserKarma(userID, apiEvent.TeamID, incrementValue)
 			if err != nil {
-				fmt.Fprintf(os.Stdout, "Error while updating user karma: %v\n", err)
+				log.Printf("Error while updating user karma: %v\n", err)
 				return
 			}
 		} else {
@@ -63,7 +63,7 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Events
 			return
 		}
 	} else {
-		fmt.Printf("Unknown user ID '%v'!\n", userID)
+		log.Printf("Unknown user ID '%v'!\n", userID)
 		return
 	}
 
@@ -98,7 +98,7 @@ func ProcessGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Event
 		if memberID != ev.User || incrementValue < 0 {
 			_, err = db.UpdateUserKarma(memberID, apiEvent.TeamID, incrementValue)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error while updating user karma: %v", err)
+				log.Printf("Error while updating user karma: %v\n", err)
 				return
 			}
 		}
@@ -107,7 +107,7 @@ func ProcessGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Event
 	var group *db.Group
 
 	if group, err = db.UpdateGroupKarma(groupID, apiEvent.TeamID, incrementValue); err != nil {
-		fmt.Fprintf(os.Stderr, "Error while updating group karma: %v", err)
+		log.Printf("Error while updating group karma: %v", err)
 	}
 
 	response := getGroupKarmaMessage(groupID, group.Karma, incrementValue)

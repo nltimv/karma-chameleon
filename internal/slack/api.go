@@ -1,7 +1,6 @@
 package slack
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/slack-go/slack"
@@ -10,7 +9,7 @@ import (
 func Say(message string, channel string) {
 	_, _, err := webApi.PostMessage(channel, slack.MsgOptionText(message, false))
 	if err != nil {
-		fmt.Printf("failed posting message: %v", err)
+		log.Printf("failed posting message: %v\n", err)
 	}
 }
 

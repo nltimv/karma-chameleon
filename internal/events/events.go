@@ -1,7 +1,7 @@
 package events
 
 import (
-	"fmt"
+	"log"
 	"regexp"
 
 	"github.com/slack-go/slack/slackevents"
@@ -21,29 +21,29 @@ func HandleEvents(handler *socketmode.SocketmodeHandler) {
 }
 
 func handleConnecting(evt *socketmode.Event, client *socketmode.Client) {
-	fmt.Println("Connecting to Slack with Socket Mode...")
+	log.Println("Connecting to Slack with Socket Mode...")
 }
 
 func handleConnectionError(evt *socketmode.Event, client *socketmode.Client) {
-	fmt.Println("Connection failed. Retrying later...")
+	log.Println("Connection failed. Retrying later...")
 }
 
 func handleConnected(evt *socketmode.Event, client *socketmode.Client) {
-	fmt.Println("Connected to Slack with Socket Mode.")
+	log.Println("Connected to Slack with Socket Mode.")
 }
 
 func handleHello(evt *socketmode.Event, client *socketmode.Client) {
-	fmt.Println("Hello from Slack!")
+	log.Println("Hello from Slack!")
 }
 
 func handleIncomingError(evt *socketmode.Event, client *socketmode.Client) {
-	fmt.Println("Incoming error from Slack.")
+	log.Println("Incoming error from Slack.")
 }
 
 func handleMessageEvent(evt *socketmode.Event, client *socketmode.Client) {
 	eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
 	if !ok {
-		fmt.Printf("Ignored %+v\n", evt)
+		log.Printf("Ignored %+v\n", evt)
 		return
 	}
 
@@ -51,7 +51,7 @@ func handleMessageEvent(evt *socketmode.Event, client *socketmode.Client) {
 
 	ev, ok := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
 	if !ok {
-		fmt.Printf("Ignored %+v\n", ev)
+		log.Printf("Ignored %+v\n", ev)
 		return
 	}
 

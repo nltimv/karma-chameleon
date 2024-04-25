@@ -1,7 +1,6 @@
 package slack
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -32,19 +31,17 @@ func Init(appToken string, botToken string, debugMode bool) {
 
 	authTest, authTestErr := webApi.AuthTest()
 	if authTestErr != nil {
-		fmt.Fprintf(os.Stderr, "SLACK_BOT_TOKEN is invalid: %v\n", authTestErr)
-		os.Exit(1)
+		log.Fatalf("SLACK_BOT_TOKEN is invalid: %v\n", authTestErr)
 	}
 	selfUserId = authTest.UserID
-	fmt.Println("Authenticated successfully!")
+	log.Println("Authenticated successfully!")
 
 	socketModeHandler = socketmode.NewSocketmodeHandler(socketMode)
 }
 
 func Run() {
 	if socketMode == nil || socketModeHandler == nil {
-		fmt.Fprintf(os.Stderr, "SocketMode is not initialized!\n")
-		os.Exit(1)
+		log.Fatalln("SocketMode is not initialized!")
 	}
 
 	socketModeHandler.RunEventLoop()
