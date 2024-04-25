@@ -12,7 +12,8 @@
             "program": "${workspaceFolder}/cmd/slack",
             "envFile": [
                 "${workspaceFolder}/.env.default",
-                "${workspaceFolder}/.env.overrides"
+                "${workspaceFolder}/.env.overrides",
+                "${workspaceFolder}/.env.overrides.debug"
             ]
         }
     ]
