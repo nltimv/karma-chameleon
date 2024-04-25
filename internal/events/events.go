@@ -1,7 +1,6 @@
 package events
 
 import (
-	"log"
 	"regexp"
 	"strings"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 	"nltimv.com/karma-chameleon/internal/karma"
+	"nltimv.com/karma-chameleon/internal/log"
 	"nltimv.com/karma-chameleon/internal/slack"
 	"nltimv.com/karma-chameleon/internal/ui"
 )
@@ -31,29 +31,29 @@ func HandleEvents(handler *socketmode.SocketmodeHandler) {
 }
 
 func handleConnecting(evt *socketmode.Event, client *socketmode.Client) {
-	log.Println("Connecting to Slack with Socket Mode...")
+	log.Default.Println("Connecting to Slack with Socket Mode...")
 }
 
 func handleConnectionError(evt *socketmode.Event, client *socketmode.Client) {
-	log.Println("Connection failed. Retrying later...")
+	log.Default.Println("Connection failed. Retrying later...")
 }
 
 func handleConnected(evt *socketmode.Event, client *socketmode.Client) {
-	log.Println("Connected to Slack with Socket Mode.")
+	log.Default.Println("Connected to Slack with Socket Mode.")
 }
 
 func handleHello(evt *socketmode.Event, client *socketmode.Client) {
-	log.Println("Hello from Slack!")
+	log.Default.Println("Hello from Slack!")
 }
 
 func handleIncomingError(evt *socketmode.Event, client *socketmode.Client) {
-	log.Println("Incoming error from Slack.")
+	log.Error.Println("Incoming error from Slack.")
 }
 
 func handleMessageEvent(evt *socketmode.Event, client *socketmode.Client) {
 	eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
 	if !ok {
-		log.Printf("Ignored %+v\n", evt)
+		log.Default.Printf("Ignored %+v\n", evt)
 		return
 	}
 
@@ -61,7 +61,7 @@ func handleMessageEvent(evt *socketmode.Event, client *socketmode.Client) {
 
 	ev, ok := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
 	if !ok {
-		log.Printf("Ignored %+v\n", ev)
+		log.Default.Printf("Ignored %+v\n", ev)
 		return
 	}
 
@@ -73,7 +73,7 @@ func handleMessageEvent(evt *socketmode.Event, client *socketmode.Client) {
 func handleAppHomeOpened(evt *socketmode.Event, client *socketmode.Client) {
 	eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
 	if !ok {
-		log.Printf("Ignored %+v\n", evt)
+		log.Default.Printf("Ignored %+v\n", evt)
 		return
 	}
 	client.Ack(*evt.Request)
@@ -81,7 +81,7 @@ func handleAppHomeOpened(evt *socketmode.Event, client *socketmode.Client) {
 	ev, ok := eventsAPIEvent.InnerEvent.Data.(*slackevents.AppHomeOpenedEvent)
 
 	if !ok {
-		log.Printf("Ignored %+v\n", ev)
+		log.Default.Printf("Ignored %+v\n", ev)
 		return
 	}
 
@@ -104,7 +104,7 @@ func handleInteraction(evt *socketmode.Event, client *socketmode.Client) {
 	case interactionActionLeaderboardUsers:
 		// TODO: Implement leaderboard
 	default:
-		log.Printf("Unknown action ID: %s\n", actionId)
+		log.Default.Printf("Unknown action ID: %s\n", actionId)
 	}
 }
 

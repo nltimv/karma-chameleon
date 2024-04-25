@@ -3,12 +3,13 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"nltimv.com/karma-chameleon/internal/log"
 )
 
 var (
@@ -30,10 +31,10 @@ func Open(dbHost string, dbPort string, dbUser string, dbPassword string, dbName
 		}
 
 		if ctr == 5 {
-			log.Fatalf("Failed to connect to database: %v", err)
+			log.Error.Fatalf("Failed to connect to database: %v", err)
 		}
 
-		log.Println("Failed to connect to database. Retrying in 5 seconds...")
+		log.Error.Println("Failed to connect to database. Retrying in 5 seconds...")
 		time.Sleep(5 * time.Second)
 		ctr++
 	}
@@ -41,7 +42,7 @@ func Open(dbHost string, dbPort string, dbUser string, dbPassword string, dbName
 	sqldb, _ = db.DB()
 
 	if err = sqldb.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
+		log.Error.Fatalf("Failed to ping database: %v", err)
 	}
 
 }

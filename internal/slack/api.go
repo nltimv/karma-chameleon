@@ -1,13 +1,13 @@
 package slack
 
 import (
-	"log"
+	"nltimv.com/karma-chameleon/internal/log"
 )
 
 func IsValidUser(userID string) bool {
 	userInfo, err := webApi.GetUserInfo(userID)
 	if err != nil {
-		log.Println("Error getting user info: ", err)
+		log.Error.Println("Error getting user info: ", err)
 		return false
 	}
 
@@ -17,7 +17,7 @@ func IsValidUser(userID string) bool {
 func GetUsergroupMembers(groupID string) []string {
 	usergroup, err := webApi.GetUserGroupMembers(groupID)
 	if err != nil {
-		log.Println("Error getting user group members: ", err)
+		log.Error.Println("Error getting user group members: ", err)
 		return []string{}
 	}
 
