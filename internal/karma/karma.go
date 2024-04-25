@@ -2,7 +2,7 @@ package karma
 
 import (
 	"fmt"
-	"os"
+	"log"
 	"regexp"
 
 	"github.com/slack-go/slack/slackevents"
@@ -14,9 +14,12 @@ func ProcessGetUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Eve
 	matches := re.FindStringSubmatch(ev.Text)
 	userID := matches[1]
 
-	karma := db.GetUserKarma(userID, apiEvent.TeamID)
+	user, err := db.GetUserKarma(userID, apiEvent.TeamID)
+	if err != nil {
+		log.Printf("Error while querying user karma: %v\n", err)
+	}
 
-	response := fmt.Sprintf("<@%s> currently has %d karma.", userID, karma)
+	response := fmt.Sprintf("<@%s> currently has %d karma.", userID, user.Karma)
 	ctx := getMessageContext(ev, apiEvent)
 	slack.Say(response, ctx, nil)
 }
@@ -25,9 +28,12 @@ func ProcessGetGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Ev
 	matches := re.FindStringSubmatch(ev.Text)
 	groupID := matches[1]
 
-	karma := db.GetGroupKarma(groupID, apiEvent.TeamID)
+	group, err := db.GetGroupKarma(groupID, apiEvent.TeamID)
+	if err != nil {
+		log.Printf("Error while querying group karma: %v\n", err)
+	}
 
-	response := fmt.Sprintf("<!subteam^%s> currently has %d karma.", groupID, karma)
+	response := fmt.Sprintf("<!subteam^%s> currently has %d karma.", groupID, group.Karma)
 	ctx := getMessageContext(ev, apiEvent)
 	slack.Say(response, ctx, nil)
 }
@@ -44,15 +50,15 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Events
 		return
 	}
 
-	var karma int
+	var user *db.User
 	valid := slack.IsValidUser(userID)
 	if valid {
 		if userID != ev.User || incrementValue < 0 {
 			var err error
 
-			karma, err = db.UpdateUserKarma(userID, apiEvent.TeamID, incrementValue)
+			user, err = db.UpdateUserKarma(userID, apiEvent.TeamID, incrementValue)
 			if err != nil {
-				fmt.Fprintf(os.Stdout, "Error while updating user karma: %v\n", err)
+				log.Printf("Error while updating user karma: %v\n", err)
 				return
 			}
 		} else {
@@ -60,20 +66,20 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Events
 			return
 		}
 	} else {
-		fmt.Printf("Unknown user ID '%v'!\n", userID)
+		log.Printf("Unknown user ID '%v'!\n", userID)
 		return
 	}
 
 	var response string
 	switch incrementValue {
 	case 2:
-		response = fmt.Sprintf("<@%s>'s karma got a double boost! 🚀 They now have %d karma.", userID, karma)
+		response = fmt.Sprintf("<@%s>'s karma got a double boost! 🚀 They now have %d karma.", userID, user.Karma)
 	case 1:
-		response = fmt.Sprintf("<@%s>'s karma is on the rise! 🚀 They now have %d karma.", userID, karma)
+		response = fmt.Sprintf("<@%s>'s karma is on the rise! 🚀 They now have %d karma.", userID, user.Karma)
 	case -1:
-		response = fmt.Sprintf("<@%s>'s karma took a hit! 💔 They now have %d karma.", userID, karma)
+		response = fmt.Sprintf("<@%s>'s karma took a hit! 💔 They now have %d karma.", userID, user.Karma)
 	case -2:
-		response = fmt.Sprintf("<@%s>'s karma took a double hit! 💔 They now have %d karma.", userID, karma)
+		response = fmt.Sprintf("<@%s>'s karma took a double hit! 💔 They now have %d karma.", userID, user.Karma)
 	}
 
 	slack.Say(response, ctx, nil)
@@ -106,24 +112,28 @@ func ProcessGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Event
 		if memberID != ev.User || incrementValue < 0 {
 			_, err = db.UpdateUserKarma(memberID, apiEvent.TeamID, incrementValue)
 			if err != nil {
-				fmt.Fprintf(os.Stdout, "Error while updating user karma: %v", err)
+				log.Printf("Error while updating user karma: %v\n", err)
 				return
 			}
 		}
 	}
 
-	karma := db.UpdateGroupKarma(groupID, apiEvent.TeamID, incrementValue)
+	var group *db.Group
+
+	if group, err = db.UpdateGroupKarma(groupID, apiEvent.TeamID, incrementValue); err != nil {
+		log.Printf("Error while updating group karma: %v", err)
+	}
 
 	var response string
 	switch incrementValue {
 	case 2:
-		response = fmt.Sprintf("The karma of <!subteam^%s> and its members got a double boost! 🚀 They now have %d karma.", groupID, karma)
+		response = fmt.Sprintf("The karma of <!subteam^%s> and its members got a double boost! 🚀 They now have %d karma.", groupID, group.Karma)
 	case 1:
-		response = fmt.Sprintf("The karma of <!subteam^%s> and its members is on the rise! 🚀 They now have %d karma.", groupID, karma)
+		response = fmt.Sprintf("The karma of <!subteam^%s> and its members is on the rise! 🚀 They now have %d karma.", groupID, group.Karma)
 	case -1:
-		response = fmt.Sprintf("The karma of <!subteam^%s> and its members took a hit! 💔 They now have %d karma.", groupID, karma)
+		response = fmt.Sprintf("The karma of <!subteam^%s> and its members took a hit! 💔 They now have %d karma.", groupID, group.Karma)
 	case -2:
-		response = fmt.Sprintf("The karma of <!subteam^%s> and its members took a double hit! 💔 They now have %d karma.", groupID, karma)
+		response = fmt.Sprintf("The karma of <!subteam^%s> and its members took a double hit! 💔 They now have %d karma.", groupID, group.Karma)
 	}
 
 	slack.Say(response, ctx, nil)

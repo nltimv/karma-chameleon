@@ -33,7 +33,7 @@ func main() {
 	db.Open(dbHost, dbPort, dbUser, dbPassword, dbName, dbSslMode)
 	defer db.Close()
 
-	db.MigrateDb()
+	db.Migrate()
 
 	slack.Init(appToken, botToken, debugMode)
 
