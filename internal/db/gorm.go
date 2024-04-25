@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var (
@@ -17,10 +19,23 @@ var (
 func Open(dbHost string, dbPort string, dbUser string, dbPassword string, dbName string, sslmode string) {
 	var err error
 	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v sslmode=%v", dbHost, dbUser, dbPassword, dbName, dbPort, sslmode)
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+	ctr := 0
+	for {
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Silent),
+		})
+		if err == nil {
+			break
+		}
+
+		if ctr == 5 {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
+
+		log.Println("Failed to connect to database. Retrying in 5 seconds...")
+		time.Sleep(5 * time.Second)
+		ctr++
 	}
 
 	sqldb, _ = db.DB()
