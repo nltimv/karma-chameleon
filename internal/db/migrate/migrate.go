@@ -55,5 +55,7 @@ func Migrate(db *gorm.DB) {
 
 	if err := m.Migrate(); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
+	} else {
+		log.Println("Database migration successful!")
 	}
 }
