@@ -73,7 +73,7 @@ func handleMessageEvent(evt *socketmode.Event, client *socketmode.Client) {
 func handleAppHomeOpened(evt *socketmode.Event, client *socketmode.Client) {
 	eventsAPIEvent, ok := evt.Data.(slackevents.EventsAPIEvent)
 	if !ok {
-		fmt.Printf("Ignored %+v\n", evt)
+		log.Printf("Ignored %+v\n", evt)
 		return
 	}
 	client.Ack(*evt.Request)
@@ -81,7 +81,7 @@ func handleAppHomeOpened(evt *socketmode.Event, client *socketmode.Client) {
 	ev, ok := eventsAPIEvent.InnerEvent.Data.(*slackevents.AppHomeOpenedEvent)
 
 	if !ok {
-		fmt.Printf("Ignored %+v\n", ev)
+		log.Printf("Ignored %+v\n", ev)
 		return
 	}
 
@@ -104,7 +104,7 @@ func handleInteraction(evt *socketmode.Event, client *socketmode.Client) {
 	case interactionActionLeaderboardUsers:
 		// TODO: Implement leaderboard
 	default:
-		fmt.Printf("Unknown action ID: %s\n", actionId)
+		log.Printf("Unknown action ID: %s\n", actionId)
 	}
 }
 

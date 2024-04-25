@@ -1,6 +1,7 @@
 package slack
 
 import (
+	"fmt"
 	"log"
 	"os"
 
