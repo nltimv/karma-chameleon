@@ -1,11 +1,5 @@
 package db
 
-import (
-	"errors"
-
-	"gorm.io/gorm"
-)
-
 func UpdateUserKarma(userID string, teamID string, increment int) (*User, error) {
 	var user *User
 	var err error
@@ -23,21 +17,10 @@ func UpdateUserKarma(userID string, teamID string, increment int) (*User, error)
 }
 
 func GetUserKarma(userID string, teamID string) (*User, error) {
-	var err error
-	var user User
-	if err = db.Where("user_id = ? AND team_id = ?", userID, teamID).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			user = User{
-				UserId: userID,
-				TeamId: teamID,
-				Karma:  0,
-			}
-		} else {
-			return &user, err
-		}
-	}
+	var user *User
+	err := db.Attrs(User{Karma: 0}).FirstOrInit(user, User{UserId: userID, TeamId: teamID}).Error
 
-	return &user, nil
+	return user, err
 }
 
 func UpdateGroupKarma(groupID string, teamID string, increment int) (*Group, error) {
@@ -57,19 +40,8 @@ func UpdateGroupKarma(groupID string, teamID string, increment int) (*Group, err
 }
 
 func GetGroupKarma(groupID string, teamID string) (*Group, error) {
-	var err error
-	var group Group
-	if err = db.Where("user_id = ? AND team_id = ?", groupID, teamID).First(&group).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			group = Group{
-				GroupId: groupID,
-				TeamId:  teamID,
-				Karma:   0,
-			}
-		} else {
-			return &group, err
-		}
-	}
+	var group *Group
+	err := db.Attrs(Group{Karma: 0}).FirstOrInit(group, Group{GroupId: groupID, TeamId: teamID}).Error
 
-	return &group, nil
+	return group, err
 }
