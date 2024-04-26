@@ -102,7 +102,7 @@ func handleInteraction(evt *socketmode.Event, client *socketmode.Client) {
 
 	switch actionId {
 	case interactionActionLeaderboardUsers:
-		// TODO: Implement leaderboard
+		karma.OpenLeaderboard(&interaction)
 	default:
 		log.Default.Printf("Unknown action ID: %s\n", actionId)
 	}

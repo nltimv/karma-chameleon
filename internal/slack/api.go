@@ -23,3 +23,13 @@ func GetUsergroupMembers(groupID string) []string {
 
 	return usergroup
 }
+
+func GetProfilePictureUri(userId string) (string, error) {
+	userInfo, err := webApi.GetUserInfo(userId)
+	if err != nil {
+		log.Error.Println("Error getting user info: ", err)
+		return "", err
+	}
+
+	return userInfo.Profile.Image192, err
+}

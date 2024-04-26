@@ -22,7 +22,7 @@ func ShowHomeTab(ev *slackevents.AppHomeOpenedEvent) {
 		slackapi.NewButtonBlockElement(
 			"actionLeaderboardUsers",
 			"valueLeaderboardUsers",
-			slackapi.NewTextBlockObject("plain_text", ":medal: Show leaderboard (users)", true, false),
+			slackapi.NewTextBlockObject("plain_text", ":trophy: Show leaderboard (users)", true, false),
 		),
 	))
 

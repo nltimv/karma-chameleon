@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type UserLeaderboardEntry struct {
 	User
-	Rank int
+	Rank uint
 }
 
 func getUserLeaderboard(tx *gorm.DB, teamID string) ([]*UserLeaderboardEntry, error) {
