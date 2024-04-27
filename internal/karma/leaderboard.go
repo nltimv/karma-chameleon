@@ -32,7 +32,7 @@ func OpenLeaderboard(interaction *slackapi.InteractionCallback) {
 
 		// Retrieve profile picture URI for top 3 entries
 		if entry.Rank <= 3 || entry.UserId == interaction.User.ID {
-			profilePictureURI, err := slack.GetProfilePictureUri(interaction.User.ID)
+			profilePictureURI, err := slack.GetProfilePictureUri(entry.UserId)
 
 			if err != nil {
 				// Handle error
