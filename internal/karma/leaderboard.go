@@ -18,41 +18,53 @@ func OpenLeaderboard(interaction *slackapi.InteractionCallback) {
 	}
 
 	// Create leaderboard view model
-	leaderboard := make([]*viewmodels.LeaderboardUserRow, len(entries))
+	leaderboard := make([]*viewmodels.LeaderboardUserRow, 0)
 
 	var currentUserEntry *viewmodels.LeaderboardUserRow
 
-	for i, entry := range entries {
+	for _, entry := range entries {
 		// Fill leaderboard view model
-		leaderboard[i] = &viewmodels.LeaderboardUserRow{
+		modelEntry := &viewmodels.LeaderboardUserRow{
 			Rank:   entry.Rank,
 			UserId: entry.UserId,
 			Karma:  entry.Karma,
 		}
 
 		// Retrieve profile picture URI for top 3 entries
-		if entry.Rank <= 3 {
-			profilePictureURI, err := slack.GetProfilePictureUri(entry.UserId)
+		if entry.Rank <= 3 || entry.UserId == interaction.User.ID {
+			profilePictureURI, err := slack.GetProfilePictureUri(interaction.User.ID)
 
 			if err != nil {
 				// Handle error
 				return
 			}
 
-			leaderboard[i].ProfilePictureUri = profilePictureURI
+			modelEntry.ProfilePictureUri = profilePictureURI
 		}
 
 		if entry.UserId == interaction.User.ID {
-			currentUserEntry = leaderboard[i]
+			currentUserEntry = modelEntry
+		}
+
+		if entry.Karma > 0 {
+			leaderboard = append(leaderboard, modelEntry)
 		}
 	}
 
 	// Create default leaderboard entry for the current user if not found
 	if currentUserEntry == nil {
+		profilePictureURI, err := slack.GetProfilePictureUri(interaction.User.ID)
+
+		if err != nil {
+			// Handle error
+			return
+		}
+
 		currentUserEntry = &viewmodels.LeaderboardUserRow{
-			UserId: interaction.User.ID,
-			Karma:  0,
-			Rank:   0,
+			UserId:            interaction.User.ID,
+			Karma:             0,
+			Rank:              0,
+			ProfilePictureUri: profilePictureURI,
 		}
 	}
 
