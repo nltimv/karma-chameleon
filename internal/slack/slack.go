@@ -1,11 +1,12 @@
 package slack
 
 import (
-	"log"
-	"os"
+	"fmt"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/socketmode"
+
+	"nltimv.com/karma-chameleon/internal/log"
 )
 
 var (
@@ -20,28 +21,28 @@ func Init(appToken string, botToken string, debugMode bool) {
 		botToken,
 		slack.OptionAppLevelToken(appToken),
 		slack.OptionDebug(debugMode),
-		slack.OptionLog(log.New(os.Stdout, "api: ", log.Lshortfile|log.LstdFlags)),
+		slack.OptionLog(log.Slack),
 	)
 
 	socketMode = socketmode.New(
 		webApi,
 		socketmode.OptionDebug(debugMode),
-		socketmode.OptionLog(log.New(os.Stdout, "sm: ", log.Lshortfile|log.LstdFlags)),
+		socketmode.OptionLog(log.Slack),
 	)
 
 	authTest, authTestErr := webApi.AuthTest()
 	if authTestErr != nil {
-		log.Fatalf("SLACK_BOT_TOKEN is invalid: %v\n", authTestErr)
+		log.Error.Fatalf("SLACK_BOT_TOKEN is invalid: %v\n", authTestErr)
 	}
 	selfUserId = authTest.UserID
-	log.Println("Authenticated successfully!")
+	log.Default.Println("Authenticated successfully!")
 
 	socketModeHandler = socketmode.NewSocketmodeHandler(socketMode)
 }
 
 func Run() {
 	if socketMode == nil || socketModeHandler == nil {
-		log.Fatalln("SocketMode is not initialized!")
+		log.Default.Fatalln("SocketMode is not initialized!")
 	}
 
 	socketModeHandler.RunEventLoop()
@@ -53,4 +54,8 @@ func AddEventHandler(eventHandler func(*socketmode.SocketmodeHandler)) {
 
 func IsSelf(userId string) bool {
 	return userId == selfUserId
+}
+
+func GetAppUrl(teamId string, appId string, tab string) string {
+	return fmt.Sprintf("slack://app?team=%s&id=%s&tab=%s", teamId, appId, tab)
 }

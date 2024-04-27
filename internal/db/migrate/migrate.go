@@ -1,10 +1,10 @@
 package migrate
 
 import (
-	"log"
-
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
+
+	"nltimv.com/karma-chameleon/internal/log"
 )
 
 func Migrate(db *gorm.DB) {
@@ -54,8 +54,8 @@ func Migrate(db *gorm.DB) {
 	})
 
 	if err := m.Migrate(); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
+		log.Error.Fatalf("Failed to migrate database: %v", err)
 	} else {
-		log.Println("Database migration successful!")
+		log.Default.Println("Database migration successful!")
 	}
 }

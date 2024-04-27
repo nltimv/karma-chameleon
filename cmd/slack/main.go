@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"strconv"
 
@@ -9,18 +8,19 @@ import (
 
 	"nltimv.com/karma-chameleon/internal/db"
 	"nltimv.com/karma-chameleon/internal/events"
+	"nltimv.com/karma-chameleon/internal/log"
 	"nltimv.com/karma-chameleon/internal/slack"
 )
 
 func main() {
 	botToken := os.Getenv("SLACK_BOT_TOKEN")
 	if botToken == "" {
-		log.Fatal("Slack bot token not provided")
+		log.Error.Fatal("Slack bot token not provided")
 	}
 
 	appToken := os.Getenv("SLACK_APP_TOKEN")
 	if appToken == "" {
-		log.Fatal("Slack app token not provided")
+		log.Error.Fatal("Slack app token not provided")
 	}
 	debugMode, _ := strconv.ParseBool(os.Getenv("SLACK_DEBUG_MODE"))
 	dbName := os.Getenv("DB_NAME")
