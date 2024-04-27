@@ -7,8 +7,10 @@ type UserLeaderboardEntry struct {
 	Rank uint
 }
 
-func getUserLeaderboard(tx *gorm.DB, teamID string) ([]*UserLeaderboardEntry, error) {
-	var users []*UserLeaderboardEntry
-	err := tx.Model(&User{}).Select("*, RANK () OVER (ORDER BY karma DESC) rank").Find(&users, &User{TeamId: teamID}).Error
-	return users, err
+func GetUserLeaderboard(teamID string) ([]*UserLeaderboardEntry, error) {
+	return handleTransaction(func(tx *gorm.DB) ([]*UserLeaderboardEntry, error) {
+		var users []*UserLeaderboardEntry
+		err := tx.Model(&User{}).Select("*, RANK () OVER (ORDER BY karma DESC) rank").Find(&users, &User{TeamId: teamID}).Error
+		return users, err
+	})
 }
