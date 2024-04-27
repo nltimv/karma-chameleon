@@ -63,7 +63,7 @@ func getUserKarma(tx *gorm.DB, userID string, teamID string) (*User, error) {
 
 func getGroupKarma(tx *gorm.DB, groupID string, teamID string) (*Group, error) {
 	var group *Group
-	err := tx.First(group, Group{GroupId: groupID, TeamId: teamID}).Error
+	err := tx.First(&group, Group{GroupId: groupID, TeamId: teamID}).Error
 	if err != nil && err == gorm.ErrRecordNotFound {
 		group = &Group{GroupId: groupID, TeamId: teamID, Karma: 0}
 		return group, nil
