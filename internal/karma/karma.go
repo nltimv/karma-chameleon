@@ -3,6 +3,7 @@ package karma
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/slack-go/slack/slackevents"
 	"nltimv.com/karma-chameleon/internal/db"
@@ -12,16 +13,18 @@ import (
 
 func ProcessGetUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent, re *regexp.Regexp) {
 	matches := re.FindStringSubmatch(ev.Text)
-	userID := matches[1]
+	userIDs := matches[1:]
 
-	user, err := db.GetUserKarma(userID, apiEvent.TeamID)
-	if err != nil {
-		log.Error.Printf("Error while querying user karma: %v\n", err)
+	for _, userID := range userIDs {
+		user, err := db.GetUserKarma(userID, apiEvent.TeamID)
+		if err != nil {
+			log.Error.Printf("Error while querying user karma: %v\n", err)
+		}
+
+		response := fmt.Sprintf("<@%s> currently has %d karma.", userID, user.Karma)
+		ctx := getMessageContext(ev, apiEvent)
+		slack.Say(response, ctx, nil)
 	}
-
-	response := fmt.Sprintf("<@%s> currently has %d karma.", userID, user.Karma)
-	ctx := getMessageContext(ev, apiEvent)
-	slack.Say(response, ctx, nil)
 }
 
 func ProcessGetGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent, re *regexp.Regexp) {
@@ -41,8 +44,9 @@ func ProcessGetGroupKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Ev
 func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent, re *regexp.Regexp) {
 	ctx := getMessageContext(ev, apiEvent)
 	matches := re.FindStringSubmatch(ev.Text)
-	userID := matches[1]
-	increment := matches[2]
+	userRe := regexp.MustCompile(`<@([a-zA-Z0-9_]+)>`)
+	userIDs := userRe.FindAllStringSubmatch(matches[0], -1)
+	increment := matches[len(matches)-1]
 
 	incrementValue := getIncrement(increment)
 
@@ -50,37 +54,43 @@ func ProcessUserKarma(ev *slackevents.MessageEvent, apiEvent *slackevents.Events
 		return
 	}
 
-	var user *db.User
-	valid := slack.IsValidUser(userID)
-	if valid {
-		if userID != ev.User || incrementValue < 0 {
-			var err error
+	responses := make([]string, len(userIDs))
 
-			user, err = db.UpdateUserKarma(userID, apiEvent.TeamID, incrementValue)
-			if err != nil {
-				log.Error.Printf("Error while updating user karma: %v\n", err)
+	for i, u := range userIDs {
+		var user *db.User
+		userID := u[1]
+		valid := slack.IsValidUser(userID)
+		if valid {
+			if userID != ev.User || incrementValue < 0 {
+				var err error
+
+				user, err = db.UpdateUserKarma(userID, apiEvent.TeamID, incrementValue)
+				if err != nil {
+					log.Error.Printf("Error while updating user karma: %v\n", err)
+					return
+				}
+			} else {
+				slack.Say("Nice try! You can't boost your own ego. 😜", ctx, nil)
 				return
 			}
 		} else {
-			slack.Say("Nice try! You can't boost your own ego. 😜", ctx, nil)
+			log.Error.Printf("Unknown user ID '%v'!\n", userID)
 			return
 		}
-	} else {
-		log.Error.Printf("Unknown user ID '%v'!\n", userID)
-		return
+
+		switch incrementValue {
+		case 2:
+			responses[i] = fmt.Sprintf("<@%s>'s karma got a double boost! 🚀 They now have %d karma.", userID, user.Karma)
+		case 1:
+			responses[i] = fmt.Sprintf("<@%s>'s karma is on the rise! 🚀 They now have %d karma.", userID, user.Karma)
+		case -1:
+			responses[i] = fmt.Sprintf("<@%s>'s karma took a hit! 💔 They now have %d karma.", userID, user.Karma)
+		case -2:
+			responses[i] = fmt.Sprintf("<@%s>'s karma took a double hit! 💔 They now have %d karma.", userID, user.Karma)
+		}
 	}
 
-	var response string
-	switch incrementValue {
-	case 2:
-		response = fmt.Sprintf("<@%s>'s karma got a double boost! 🚀 They now have %d karma.", userID, user.Karma)
-	case 1:
-		response = fmt.Sprintf("<@%s>'s karma is on the rise! 🚀 They now have %d karma.", userID, user.Karma)
-	case -1:
-		response = fmt.Sprintf("<@%s>'s karma took a hit! 💔 They now have %d karma.", userID, user.Karma)
-	case -2:
-		response = fmt.Sprintf("<@%s>'s karma took a double hit! 💔 They now have %d karma.", userID, user.Karma)
-	}
+	response := strings.Join(responses, "\n")
 
 	slack.Say(response, ctx, nil)
 }

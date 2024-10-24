@@ -110,10 +110,10 @@ func handleInteraction(evt *socketmode.Event, client *socketmode.Client) {
 
 func processMessage(ev *slackevents.MessageEvent, apiEvent *slackevents.EventsAPIEvent) {
 	patterns := map[*regexp.Regexp]func(*slackevents.MessageEvent, *slackevents.EventsAPIEvent, *regexp.Regexp){
-		regexp.MustCompile(`<@([a-zA-Z0-9_]+)>\s?(\+\+\+|---|\+\+|--)`):                              karma.ProcessUserKarma,
-		regexp.MustCompile(`<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-.]*>\s?(\+\+\+|---|\+\+|--)`): karma.ProcessGroupKarma,
-		regexp.MustCompile(`<@([a-zA-Z0-9_]+)>\s?karma`):                                             karma.ProcessGetUserKarma,
-		regexp.MustCompile(`<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-.]*>\s?karma`):                karma.ProcessGetGroupKarma,
+		regexp.MustCompile(`((?:<@([a-zA-Z0-9_]+)>\s*)+)(\+{2,3}|-{2,3})`):                       karma.ProcessUserKarma,
+		regexp.MustCompile(`<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-.]*>\s?(\+{2,3}|-{2,3})`): karma.ProcessGroupKarma,
+		regexp.MustCompile(`(?:<@([a-zA-Z0-9_]+)>\s*)+karma`):                                    karma.ProcessGetUserKarma,
+		regexp.MustCompile(`<!subteam\^([a-zA-Z0-9_]+)\|?[@a-zA-Z0-9_\-.]*>\s?karma`):            karma.ProcessGetGroupKarma,
 	}
 
 	for pattern, processor := range patterns {
