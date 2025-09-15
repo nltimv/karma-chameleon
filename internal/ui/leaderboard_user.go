@@ -27,7 +27,7 @@ func ShowUserLeaderboard(viewmodel *viewmodels.LeaderboardUserViewModel, interac
 	pfpBlock := slackapi.NewImageBlockElement(viewmodel.CurrentUser.ProfilePictureUri, "profile picture")
 
 	blocks = append(blocks, slackapi.NewSectionBlock(
-		slackapi.NewTextBlockObject("mrkdwn", myKarmaText, false, false),
+		slackapi.NewTextBlockObject("mrkdwn", myKarmaText, false, true),
 		nil, slackapi.NewAccessory(pfpBlock),
 	))
 
@@ -38,19 +38,19 @@ func ShowUserLeaderboard(viewmodel *viewmodels.LeaderboardUserViewModel, interac
 	))
 
 	if len(viewmodel.Leaderboard) == 0 {
-		blocks = append(blocks, slackapi.NewSectionBlock(slackapi.NewTextBlockObject("mrkdwn", "It's pretty empty in here! Will you be the first one here? :star-struck:", false, false), nil, nil))
+		blocks = append(blocks, slackapi.NewSectionBlock(slackapi.NewTextBlockObject("mrkdwn", "It's pretty empty in here! Will you be the first one here? :star-struck:", false, true), nil, nil))
 	}
 
 	for _, entry := range viewmodel.Leaderboard {
 		var entrySection *slackapi.SectionBlock
 		if entry.Rank <= 3 {
 			text := fmt.Sprintf("*#%d* %v\n\t<@%s>\n\t%d karma", entry.Rank, getMedalEmoji(entry.Rank), entry.UserId, entry.Karma)
-			textBlock := slackapi.NewTextBlockObject("mrkdwn", text, false, false)
+			textBlock := slackapi.NewTextBlockObject("mrkdwn", text, false, true)
 			pfpBlock := slackapi.NewImageBlockElement(entry.ProfilePictureUri, "profile picture")
 			entrySection = slackapi.NewSectionBlock(textBlock, nil, slackapi.NewAccessory(pfpBlock))
 		} else {
-			leftField := slackapi.NewTextBlockObject("mrkdwn", fmt.Sprintf("*#%d*\t<@%s>", entry.Rank, entry.UserId), false, false)
-			rightField := slackapi.NewTextBlockObject("mrkdwn", fmt.Sprintf("%d karma", entry.Karma), false, false)
+			leftField := slackapi.NewTextBlockObject("mrkdwn", fmt.Sprintf("*#%d*\t<@%s>", entry.Rank, entry.UserId), false, true)
+			rightField := slackapi.NewTextBlockObject("mrkdwn", fmt.Sprintf("%d karma", entry.Karma), false, true)
 			fields := [2]*slackapi.TextBlockObject{leftField, rightField}
 			entrySection = slackapi.NewSectionBlock(nil, fields[:], nil)
 		}
