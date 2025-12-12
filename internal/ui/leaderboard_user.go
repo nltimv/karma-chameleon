@@ -41,7 +41,13 @@ func ShowUserLeaderboard(viewmodel *viewmodels.LeaderboardUserViewModel, interac
 		blocks = append(blocks, slackapi.NewSectionBlock(slackapi.NewTextBlockObject("mrkdwn", "It's pretty empty in here! Will you be the first one here? :star-struck:", false, true), nil, nil))
 	}
 
-	for _, entry := range viewmodel.Leaderboard {
+	// Limit the number of displayed leaderboard entries to 90
+	entries := viewmodel.Leaderboard
+	if len(entries) > 90 {
+		entries = entries[:90]
+	}
+
+	for _, entry := range entries {
 		var entrySection *slackapi.SectionBlock
 		if entry.Rank <= 3 {
 			text := fmt.Sprintf("*#%d* %v\n\t<@%s>\n\t%d karma", entry.Rank, getMedalEmoji(entry.Rank), entry.UserId, entry.Karma)
@@ -56,6 +62,14 @@ func ShowUserLeaderboard(viewmodel *viewmodels.LeaderboardUserViewModel, interac
 		}
 
 		blocks = append(blocks, entrySection)
+	}
+
+	// If we truncated the list, show a small notice at the bottom
+	if len(viewmodel.Leaderboard) > len(entries) {
+		extra := len(viewmodel.Leaderboard) - len(entries)
+		notice := fmt.Sprintf("_+ %d more_", extra)
+		// show as plain text so the plus sign is displayed as-is
+		blocks = append(blocks, slackapi.NewSectionBlock(slackapi.NewTextBlockObject("mrkdwn", notice, false, true), nil, nil))
 	}
 
 	close := slackapi.NewTextBlockObject("plain_text", "Close", true, false)
